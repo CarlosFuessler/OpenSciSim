@@ -41,6 +41,16 @@ void ui_register_module(AppUI *ui, int topic_idx, Module *mod);
 void ui_update(AppUI *ui);
 void ui_draw(AppUI *ui);
 
+// Responsive scaling + layout helpers
+float ui_scale(void);
+Vector2 ui_mouse(void);
+Vector2 ui_to_screen(Vector2 ui_pos);
+Vector2 ui_from_screen(Vector2 screen_pos);
+void ui_scissor_begin(float x, float y, float w, float h);
+Rectangle ui_pad(Rectangle bounds, float pad);
+Rectangle ui_layout_row(Rectangle bounds, int count, int index, float gap, const float *weights);
+Rectangle ui_layout_col(Rectangle bounds, int count, int index, float gap, const float *weights);
+
 // Shared widgets
 bool ui_text_input(Rectangle bounds, char *buf, int buf_size, bool *active, const char *placeholder);
 void ui_buf_insert(char *buf, int buf_size, const char *text);

@@ -145,6 +145,24 @@ static float     info_scroll;
 
 #define SIDEBAR_W 360
 
+static void physics_layout(Rectangle area, Rectangle *sidebar, Rectangle *view3d, bool *side_by_side) {
+    float aspect = (float)GetScreenWidth() / (float)GetScreenHeight();
+    float gap = 12.0f;
+    Rectangle content = ui_pad(area, 10.0f);
+    bool side = aspect >= 1.35f;
+    float weights_row[2] = {1.2f, 2.4f};
+    float weights_col[2] = {1.6f, 2.4f};
+
+    if (side) {
+        *sidebar = ui_layout_row(content, 2, 0, gap, weights_row);
+        *view3d = ui_layout_row(content, 2, 1, gap, weights_row);
+    } else {
+        *sidebar = ui_layout_col(content, 2, 0, gap, weights_col);
+        *view3d = ui_layout_col(content, 2, 1, gap, weights_col);
+    }
+    if (side_by_side) *side_by_side = side;
+}
+
 static void physics_init(void) {
     current_model   = MODEL_BOHR;
     current_element = 0;
@@ -174,12 +192,12 @@ static void update_cam(void) {
 static void physics_update(Rectangle area) {
     anim_time += GetFrameTime();
 
-    Rectangle view3d = {
-        area.x + SIDEBAR_W, area.y,
-        area.width - SIDEBAR_W, area.height
-    };
+    Rectangle sidebar = {0};
+    Rectangle view3d = {0};
+    physics_layout(area, &sidebar, &view3d, NULL);
+    (void)sidebar;
 
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool in_view = CheckCollisionPointRec(mouse, view3d);
 
     if (in_view && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -395,7 +413,7 @@ static void draw_model_selector(float x, float *y, float w) {
 
     for (int i = 0; i < MODEL_COUNT; i++) {
         Rectangle btn = { x, *y, w, 28 };
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         bool hov = CheckCollisionPointRec(mouse, btn);
         bool sel = (i == (int)current_model);
 
@@ -432,7 +450,7 @@ static void draw_element_selector(float x, float *y, float w) {
             *y += btn_h + gap;
         }
         Rectangle btn = { bx, *y, btn_w, btn_h };
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         bool hov = CheckCollisionPointRec(mouse, btn);
         bool sel = (i == current_element);
 
@@ -507,15 +525,25 @@ static void draw_multiline(const char *text, float x, float *y, float w, int fon
 }
 
 static void physics_draw(Rectangle area) {
-    // Sidebar
-    Rectangle sidebar = { area.x, area.y, SIDEBAR_W, area.height };
-    DrawRectangleRec(sidebar, COL_PANEL);
-    DrawLine((int)(area.x + SIDEBAR_W), (int)area.y,
-             (int)(area.x + SIDEBAR_W), (int)(area.y + area.height), COL_GRID);
+    // Layout
+    Rectangle sidebar = {0};
+    Rectangle view3d = {0};
+    bool side_by_side = true;
+    physics_layout(area, &sidebar, &view3d, &side_by_side);
 
-    float sx = area.x + 8;
-    float sw = SIDEBAR_W - 16;
-    float sy = area.y + 8;
+    // Sidebar
+    DrawRectangleRec(sidebar, COL_PANEL);
+    if (side_by_side) {
+        DrawLine((int)(sidebar.x + sidebar.width), (int)sidebar.y,
+                 (int)(sidebar.x + sidebar.width), (int)(sidebar.y + sidebar.height), COL_GRID);
+    } else {
+        DrawLine((int)sidebar.x, (int)(sidebar.y + sidebar.height),
+                 (int)(sidebar.x + sidebar.width), (int)(sidebar.y + sidebar.height), COL_GRID);
+    }
+
+    float sx = sidebar.x + 8;
+    float sw = sidebar.width - 16;
+    float sy = sidebar.y + 8;
 
     // Model selector
     draw_model_selector(sx, &sy, sw);
@@ -532,9 +560,9 @@ static void physics_draw(Rectangle area) {
 
     // Description (scrollable)
     float desc_top = sy;
-    float desc_bottom = area.y + area.height - 30;
+    float desc_bottom = sidebar.y + sidebar.height - 30;
 
-    BeginScissorMode((int)area.x, (int)desc_top, SIDEBAR_W, (int)(desc_bottom - desc_top));
+    ui_scissor_begin(sidebar.x, desc_top, sidebar.width, desc_bottom - desc_top);
 
     float dy = desc_top - info_scroll;
     ui_draw_text("Description", (int)sx + 2, (int)dy, FONT_SIZE_DEFAULT, COL_ACCENT);
@@ -545,7 +573,7 @@ static void physics_draw(Rectangle area) {
     EndScissorMode();
 
     // Scroll
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     if (CheckCollisionPointRec(mouse, sidebar)) {
         info_scroll -= GetMouseWheelMove() * 25.0f;
         float max_s = dy + info_scroll - desc_bottom;
@@ -555,17 +583,13 @@ static void physics_draw(Rectangle area) {
     }
 
     // Help footer
-    ui_draw_text("Drag=Orbit  Scroll=Zoom  Home=Reset", (int)sx, (int)(area.y + area.height - 20), FONT_SIZE_TINY, COL_TEXT_DIM);
+    ui_draw_text("Drag=Orbit  Scroll=Zoom  Home=Reset", (int)sx, (int)(sidebar.y + sidebar.height - 20),
+                 FONT_SIZE_TINY, COL_TEXT_DIM);
 
     // ---- 3D view ----
-    Rectangle view3d = {
-        area.x + SIDEBAR_W, area.y,
-        area.width - SIDEBAR_W, area.height
-    };
-
     DrawRectangleRec(view3d, COL_BG);
 
-    BeginScissorMode((int)view3d.x, (int)view3d.y, (int)view3d.width, (int)view3d.height);
+    ui_scissor_begin((int)view3d.x, (int)view3d.y, (int)view3d.width, (int)view3d.height);
     BeginMode3D(cam);
 
     draw_atom_3d(&elements[current_element], current_model, anim_time);

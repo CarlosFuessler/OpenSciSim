@@ -220,7 +220,7 @@ static void calc_draw(Rectangle area) {
                 btn_w, btn_h
             };
 
-            Vector2 mouse = GetMousePosition();
+            Vector2 mouse = ui_mouse();
             bool hovered = CheckCollisionPointRec(mouse, brect);
             bool clicked = hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
@@ -279,7 +279,7 @@ static void calc_draw(Rectangle area) {
         ui_draw_text("History", (int)cx + 4, (int)hist_top + 4, FONT_SIZE_SMALL, COL_TEXT_DIM);
         float hy = hist_top + 24;
 
-        BeginScissorMode((int)cx, (int)hy, (int)calc_w, (int)(hist_bottom - hy));
+        ui_scissor_begin((int)cx, (int)hy, (int)calc_w, (int)(hist_bottom - hy));
 
         // Show recent history (newest at top)
         int shown = 0;
@@ -305,7 +305,7 @@ static void calc_draw(Rectangle area) {
         EndScissorMode();
 
         // Scroll history
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         Rectangle hist_area = { cx, hy, calc_w, hist_bottom - hy };
         if (CheckCollisionPointRec(mouse, hist_area)) {
             hist_scroll -= GetMouseWheelMove() * 30.0f;

@@ -15,6 +15,97 @@ int ui_measure_text(const char *text, int fontSize) {
     return (int)sz.x;
 }
 
+static float g_ui_scale = 1.0f;
+static Camera2D g_ui_camera = {0};
+
+static void ui_update_scale(void) {
+    float sx = (float)GetScreenWidth() / (float)WINDOW_W;
+    float sy = (float)GetScreenHeight() / (float)WINDOW_H;
+    g_ui_scale = fminf(sx, sy);
+    if (g_ui_scale < UI_MIN_SCALE) g_ui_scale = UI_MIN_SCALE;
+    if (g_ui_scale > UI_MAX_SCALE) g_ui_scale = UI_MAX_SCALE;
+
+    float view_w = WINDOW_W * g_ui_scale;
+    float view_h = WINDOW_H * g_ui_scale;
+    g_ui_camera.offset = (Vector2){
+        (GetScreenWidth() - view_w) * 0.5f,
+        (GetScreenHeight() - view_h) * 0.5f
+    };
+    g_ui_camera.target = (Vector2){0, 0};
+    g_ui_camera.rotation = 0.0f;
+    g_ui_camera.zoom = g_ui_scale;
+}
+
+float ui_scale(void) {
+    return g_ui_scale;
+}
+
+Vector2 ui_mouse(void) {
+    return GetScreenToWorld2D(GetMousePosition(), g_ui_camera);
+}
+
+Vector2 ui_to_screen(Vector2 ui_pos) {
+    return GetWorldToScreen2D(ui_pos, g_ui_camera);
+}
+
+Vector2 ui_from_screen(Vector2 screen_pos) {
+    return GetScreenToWorld2D(screen_pos, g_ui_camera);
+}
+
+void ui_scissor_begin(float x, float y, float w, float h) {
+    Vector2 tl = ui_to_screen((Vector2){x, y});
+    Vector2 br = ui_to_screen((Vector2){x + w, y + h});
+    float sx = fminf(tl.x, br.x);
+    float sy = fminf(tl.y, br.y);
+    float sw = fabsf(br.x - tl.x);
+    float sh = fabsf(br.y - tl.y);
+    BeginScissorMode((int)sx, (int)sy, (int)sw, (int)sh);
+}
+
+Rectangle ui_pad(Rectangle bounds, float pad) {
+    return (Rectangle){
+        bounds.x + pad,
+        bounds.y + pad,
+        bounds.width - pad * 2.0f,
+        bounds.height - pad * 2.0f
+    };
+}
+
+static Rectangle ui_layout_flex(Rectangle bounds, int count, int index, float gap, const float *weights, bool vertical) {
+    if (count <= 0) return bounds;
+    if (index < 0) index = 0;
+    if (index >= count) index = count - 1;
+
+    float total = 0.0f;
+    for (int i = 0; i < count; i++) total += weights ? weights[i] : 1.0f;
+    if (total <= 0.0f) total = 1.0f;
+
+    float gap_total = gap * (count - 1);
+    float avail = vertical ? bounds.height : bounds.width;
+    avail -= gap_total;
+    if (avail < 0) avail = 0;
+
+    float cursor = vertical ? bounds.y : bounds.x;
+    for (int i = 0; i < count; i++) {
+        float w = (weights ? weights[i] : 1.0f) / total;
+        float size = avail * w;
+        if (i == index) {
+            if (vertical) return (Rectangle){bounds.x, cursor, bounds.width, size};
+            return (Rectangle){cursor, bounds.y, size, bounds.height};
+        }
+        cursor += size + gap;
+    }
+    return bounds;
+}
+
+Rectangle ui_layout_row(Rectangle bounds, int count, int index, float gap, const float *weights) {
+    return ui_layout_flex(bounds, count, index, gap, weights, false);
+}
+
+Rectangle ui_layout_col(Rectangle bounds, int count, int index, float gap, const float *weights) {
+    return ui_layout_flex(bounds, count, index, gap, weights, true);
+}
+
 void ui_init(AppUI *ui) {
     ui->topic_count  = 0;
     ui->active_topic = 0;
@@ -44,10 +135,9 @@ void ui_register_module(AppUI *ui, int topic_idx, Module *mod) {
 // Start screen — topic selection
 static void draw_start_screen(AppUI *ui) {
     float t = (float)GetTime() - ui->start_time;
-    int w = GetScreenWidth();
-    int h = GetScreenHeight();
-
-    ClearBackground(COL_BG);
+    int w = WINDOW_W;
+    int h = WINDOW_H;
+    float aspect = (float)GetScreenWidth() / (float)GetScreenHeight();
 
     // Animated floating sine wave background
     for (int px = 0; px < w; px += 3) {
@@ -103,19 +193,46 @@ static void draw_start_screen(AppUI *ui) {
     // Topic cards
     float card_alpha = fminf(fmaxf((t - 0.8f) * 2.0f, 0.0f), 1.0f);
     if (card_alpha > 0.01f && ui->topic_count > 0) {
-        int card_w = 280;
-        int card_h = 140;
+        int card_h = 150;
         int gap = 24;
-        int total_w = ui->topic_count * card_w + (ui->topic_count - 1) * gap;
-        int start_x = (w - total_w) / 2;
-        int card_y = h / 2 + 20;
+        int cols = (aspect < 1.25f) ? 1 : ((aspect < 1.7f) ? 2 : 3);
+        if (cols > ui->topic_count) cols = ui->topic_count;
+        int rows = (ui->topic_count + cols - 1) / cols;
 
-        Vector2 mouse = GetMousePosition();
+        float max_card_w = 320.0f;
+        float min_card_w = 240.0f;
+        float avail_w = w - gap * (cols + 1);
+        float card_w = avail_w / cols;
+        if (card_w > max_card_w) card_w = max_card_w;
+        if (card_w < min_card_w) card_w = min_card_w;
+
+        float grid_w = cols * card_w + (cols - 1) * gap;
+        float grid_h = rows * card_h + (rows - 1) * gap;
+        Rectangle grid = {
+            (w - grid_w) / 2.0f,
+            h * 0.55f - grid_h / 2.0f,
+            grid_w, grid_h
+        };
+
+        Vector2 mouse = ui_mouse();
 
         for (int i = 0; i < ui->topic_count; i++) {
             Topic *topic = &ui->topics[i];
-            float cx = (float)(start_x + i * (card_w + gap));
-            float cy = (float)card_y;
+            int row = i / cols;
+            int col = i % cols;
+            int row_cols = cols;
+            int remaining = ui->topic_count - row * cols;
+            if (remaining < cols) row_cols = remaining;
+
+            Rectangle row_bounds = ui_layout_col(grid, rows, row, gap, NULL);
+            float row_w = row_cols * card_w + (row_cols - 1) * gap;
+            Rectangle row_inner = row_bounds;
+            row_inner.x += (row_bounds.width - row_w) / 2.0f;
+            row_inner.width = row_w;
+            Rectangle cell = ui_layout_row(row_inner, row_cols, col, gap, NULL);
+
+            float cx = cell.x;
+            float cy = cell.y;
 
             Rectangle card = { cx, cy, (float)card_w, (float)card_h };
             bool hovered = CheckCollisionPointRec(mouse, card);
@@ -196,6 +313,7 @@ static void draw_start_screen(AppUI *ui) {
 }
 
 void ui_update(AppUI *ui) {
+    ui_update_scale();
     if (ui->screen == SCREEN_START) {
         // Topic selection handled in draw (click detection)
         return;
@@ -205,7 +323,7 @@ void ui_update(AppUI *ui) {
     Topic *topic = &ui->topics[ui->active_topic];
 
     // Tab switching with mouse click
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mouse.y < TAB_HEIGHT) {
         // Skip the topic label area
         float x = 0;
@@ -242,24 +360,25 @@ void ui_update(AppUI *ui) {
 
     // Update active module
     if (topic->module_count > 0) {
-        Rectangle area = { 0, TAB_HEIGHT, (float)GetScreenWidth(), (float)GetScreenHeight() - TAB_HEIGHT };
+        Rectangle area = { 0, TAB_HEIGHT, (float)WINDOW_W, (float)WINDOW_H - TAB_HEIGHT };
         topic->modules[topic->active_tab]->update(area);
     }
 }
 
 void ui_draw(AppUI *ui) {
+    ClearBackground(COL_BG);
+    BeginMode2D(g_ui_camera);
     if (ui->screen == SCREEN_START) {
         draw_start_screen(ui);
+        EndMode2D();
         return;
     }
 
     // SCREEN_TOPIC
     Topic *topic = &ui->topics[ui->active_topic];
 
-    ClearBackground(COL_BG);
-
     // Tab bar
-    DrawRectangle(0, 0, GetScreenWidth(), TAB_HEIGHT, COL_PANEL);
+    DrawRectangle(0, 0, WINDOW_W, TAB_HEIGHT, COL_PANEL);
 
     float x = 0;
 
@@ -305,17 +424,17 @@ void ui_draw(AppUI *ui) {
         x += tw;
     }
 
-    DrawRectangle(0, TAB_HEIGHT - 1, GetScreenWidth(), 1, COL_GRID);
+    DrawRectangle(0, TAB_HEIGHT - 1, WINDOW_W, 1, COL_GRID);
 
     // Home button (right side)
     {
         const char *home_label = "< Home";
         int hw = ui_measure_text(home_label, FONT_SIZE_SMALL) + 16;
         Rectangle home_btn = {
-            (float)(GetScreenWidth() - hw - 8), 6,
+            (float)(WINDOW_W - hw - 8), 6,
             (float)hw, (float)(TAB_HEIGHT - 12)
         };
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         bool hovered = CheckCollisionPointRec(mouse, home_btn);
         Color hbg = hovered ? (Color){60, 62, 72, 255} : COL_TAB;
         DrawRectangleRounded(home_btn, 0.3f, 6, hbg);
@@ -331,13 +450,14 @@ void ui_draw(AppUI *ui) {
 
     // Draw active module
     if (topic->module_count > 0) {
-        Rectangle area = { 0, (float)TAB_HEIGHT, (float)GetScreenWidth(), (float)GetScreenHeight() - TAB_HEIGHT };
+        Rectangle area = { 0, (float)TAB_HEIGHT, (float)WINDOW_W, (float)WINDOW_H - TAB_HEIGHT };
         topic->modules[topic->active_tab]->draw(area);
     }
+    EndMode2D();
 }
 
 bool ui_text_input(Rectangle bounds, char *buf, int buf_size, bool *active, const char *placeholder) {
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool hovered = CheckCollisionPointRec(mouse, bounds);
     bool submitted = false;
 
@@ -411,7 +531,7 @@ void ui_draw_button(Rectangle bounds, const char *text, bool hovered) {
 }
 
 bool ui_template_btn(Rectangle bounds, const char *label, Color accent) {
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool hovered = CheckCollisionPointRec(mouse, bounds);
     bool clicked = hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 

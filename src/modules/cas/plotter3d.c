@@ -37,7 +37,7 @@ static void update_camera_from_orbit(Plot3DState *ps) {
 }
 
 void plotter3d_update(Plot3DState *ps, Rectangle area) {
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool in_area = CheckCollisionPointRec(mouse, area);
 
     // Orbit with left-drag
@@ -200,7 +200,7 @@ static void draw_surface(FuncSlot *slot, float range, Arena *arena) {
 void plotter3d_draw(Plot3DState *ps, Rectangle area, Arena *arena) {
     DrawRectangleRec(area, COL_BG);
 
-    BeginScissorMode((int)area.x, (int)area.y, (int)area.width, (int)area.height);
+    ui_scissor_begin((int)area.x, (int)area.y, (int)area.width, (int)area.height);
     BeginMode3D(ps->camera);
 
     draw_grid_3d(ps->range);
@@ -232,9 +232,11 @@ void plotter3d_draw(Plot3DState *ps, Rectangle area, Arena *arena) {
 
     for (int i = 0; i < 3; i++) {
         Vector2 sp = GetWorldToScreen(ax_tips[i], ps->camera);
-        if (sp.x > area.x && sp.x < area.x + area.width &&
-            sp.y > area.y && sp.y < area.y + area.height) {
-            ui_draw_text(ax_names[i], (int)sp.x + 4, (int)sp.y - 8, FONT_SIZE_DEFAULT, ax_cols[i]);
+        Vector2 sp_ui = ui_from_screen(sp);
+        if (sp_ui.x > area.x && sp_ui.x < area.x + area.width &&
+            sp_ui.y > area.y && sp_ui.y < area.y + area.height) {
+            ui_draw_text(ax_names[i], (int)sp_ui.x + 4, (int)sp_ui.y - 8,
+                         FONT_SIZE_DEFAULT, ax_cols[i]);
         }
     }
 

@@ -10,9 +10,12 @@ SRC = src/main.c \
       src/modules/cas/eval.c \
       src/modules/cas/plotter.c \
       src/modules/cas/plotter3d.c \
+      src/modules/mathsim/mathsim.c \
       src/modules/calc/calc.c \
       src/modules/physics/physics.c \
-      src/modules/chemistry/chemistry.c
+      src/modules/physics/mechanics.c \
+      src/modules/chemistry/chemistry.c \
+      src/modules/chemistry/chemsim.c
 
 OBJ = $(SRC:.c=.o)
 BIN = openscisim

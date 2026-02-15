@@ -21,7 +21,7 @@ static Vector2 math_to_screen(PlotState *ps, Rectangle area, double mx, double m
 }
 
 void plotter_update(PlotState *ps, Rectangle area) {
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool in_area = CheckCollisionPointRec(mouse, area);
 
     // Zoom with scroll wheel
@@ -84,7 +84,7 @@ static void draw_grid(PlotState *ps, Rectangle area) {
     double y_min = ps->center_y - (area.height / 2.0) / ps->scale;
     double y_max = ps->center_y + (area.height / 2.0) / ps->scale;
 
-    BeginScissorMode((int)area.x, (int)area.y, (int)area.width, (int)area.height);
+    ui_scissor_begin((int)area.x, (int)area.y, (int)area.width, (int)area.height);
 
     // Sub-grid (lighter)
     double sub_step = step / 5.0;
@@ -157,7 +157,7 @@ void plotter_draw(PlotState *ps, Rectangle area, Arena *arena) {
     DrawRectangleRec(area, COL_BG);
     draw_grid(ps, area);
 
-    BeginScissorMode((int)area.x, (int)area.y, (int)area.width, (int)area.height);
+    ui_scissor_begin((int)area.x, (int)area.y, (int)area.width, (int)area.height);
 
     double x_min = ps->center_x - (area.width / 2.0) / ps->scale;
 
@@ -212,7 +212,7 @@ void plotter_draw(PlotState *ps, Rectangle area, Arena *arena) {
     }
 
     // Crosshair + coordinate display + function values at cursor
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     if (CheckCollisionPointRec(mouse, area)) {
         double mx = ps->center_x + (mouse.x - area.x - area.width / 2.0) / ps->scale;
         double my = ps->center_y - (mouse.y - area.y - area.height / 2.0) / ps->scale;

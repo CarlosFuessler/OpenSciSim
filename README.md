@@ -11,13 +11,16 @@ Explore mathematics, physics and chemistry through hands-on visualizations.
 ### Mathematics
 - **CAS Plotter** — GeoGebra-style algebra view with 2D/3D function plotting, template buttons, implicit multiplication, graph coloring
 - **Calculator** — Casio-style scientific calculator with expression history
+- **Math Sims** — Parametric curves and polar graphs with presets
 
 ### Physics
 - **Atom Models** — Interactive 3D visualization of 5 atomic models (Dalton → Quantum Mechanical) for 10 elements with detailed explanations
+- **Mechanics Lab** — Pendulum and projectile motion simulations with adjustable parameters
 
 ### Chemistry
-- **Periodic Table** — Color-coded table (36 elements) with element details
+- **Periodic Table** — Color-coded table (118 elements) with element details
 - **Molecule Viewer** — 3D ball-and-stick models of common molecules (H₂O, CO₂, CH₄, NH₃, NaCl, Ethanol)
+- **Chemistry Lab** — Reaction visualizer and pH (acid/base) simulator
 
 ## Prerequisites
 

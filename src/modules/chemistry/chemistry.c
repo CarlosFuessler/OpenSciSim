@@ -17,6 +17,8 @@ typedef enum {
     CAT_HALOGEN,
     CAT_TRANSITION,
     CAT_POST_TRANS,
+    CAT_LANTHANIDE,
+    CAT_ACTINIDE,
     CAT_COUNT
 } ElemCategory;
 
@@ -29,11 +31,14 @@ static const Color cat_colors[] = {
     {255, 202,  40, 255},  // halogen - yellow
     { 66, 165, 245, 255},  // transition - blue
     {120, 144, 156, 255},  // post-transition - gray-blue
+    {255, 112,  67, 255},  // lanthanide - deep orange
+    {149, 117, 205, 255},  // actinide - violet
 };
 
 static const char *cat_names[] = {
     "Nonmetal", "Noble Gas", "Alkali Metal", "Alkaline Earth",
-    "Metalloid", "Halogen", "Transition Metal", "Post-Trans. Metal"
+    "Metalloid", "Halogen", "Transition Metal", "Post-Trans. Metal",
+    "Lanthanide", "Actinide"
 };
 
 typedef struct {
@@ -42,12 +47,23 @@ typedef struct {
     const char *name;
     float       mass;
     int         group;   // 1-18
-    int         period;  // 1-7
+    int         period;  // 1-9
     ElemCategory cat;
     const char *electron_config;
     float       electronegativity; // Pauling scale, 0 if N/A
     const char *description;
 } PTElement;
+
+static const char desc_noble[]      = "Inert noble gas.\nLow reactivity.";
+static const char desc_alkali[]     = "Soft, highly reactive alkali metal.\nReacts with water.";
+static const char desc_alkaline[]   = "Reactive alkaline earth metal.\nFound in minerals.";
+static const char desc_metalloid[]  = "Metalloid with mixed properties.\nUsed in semiconductors.";
+static const char desc_halogen[]    = "Reactive halogen.\nForms salts with metals.";
+static const char desc_transition[] = "Transition metal.\nConductive and malleable.";
+static const char desc_post[]       = "Post-transition metal.\nSoft and dense.";
+static const char desc_lanth[]      = "Lanthanide series element.\nRare earth metal.";
+static const char desc_act[]        = "Actinide series element.\nRadioactive metal.";
+static const char desc_synth[]      = "Synthetic element.\nRadioactive and unstable.";
 
 static const PTElement periodic_table[] = {
     {1,  "H",  "Hydrogen",   1.008f,  1, 1, CAT_NONMETAL,   "1s1",          2.20f,
@@ -122,8 +138,90 @@ static const PTElement periodic_table[] = {
      "Only liquid nonmetal at room\ntemperature. Red-brown, toxic.\nUsed in flame retardants."},
     {36, "Kr", "Krypton",    83.80f,  18,4, CAT_NOBLE_GAS,  "[Ar] 3d10 4s2 3p6", 0.00f,
      "Noble gas. Used in fluorescent\nlighting and photography\nflash equipment."},
+    {37, "Rb", "Rubidium",   85.47f,  1, 5, CAT_ALKALI,     "[Kr] 5s1",     0.82f, desc_alkali},
+    {38, "Sr", "Strontium",  87.62f,  2, 5, CAT_ALKALINE,   "[Kr] 5s2",     0.95f, desc_alkaline},
+    {39, "Y",  "Yttrium",    88.91f,  3, 5, CAT_TRANSITION, "[Kr] 4d1 5s2", 1.22f, desc_transition},
+    {40, "Zr", "Zirconium",  91.22f,  4, 5, CAT_TRANSITION, "[Kr] 4d2 5s2", 1.33f, desc_transition},
+    {41, "Nb", "Niobium",    92.91f,  5, 5, CAT_TRANSITION, "[Kr] 4d4 5s1", 1.60f, desc_transition},
+    {42, "Mo", "Molybdenum", 95.95f,  6, 5, CAT_TRANSITION, "[Kr] 4d5 5s1", 2.16f, desc_transition},
+    {43, "Tc", "Technetium", 98.00f,  7, 5, CAT_TRANSITION, "[Kr] 4d5 5s2", 1.90f, desc_transition},
+    {44, "Ru", "Ruthenium", 101.07f,  8, 5, CAT_TRANSITION, "[Kr] 4d7 5s1", 2.20f, desc_transition},
+    {45, "Rh", "Rhodium",   102.91f,  9, 5, CAT_TRANSITION, "[Kr] 4d8 5s1", 2.28f, desc_transition},
+    {46, "Pd", "Palladium", 106.42f, 10, 5, CAT_TRANSITION, "[Kr] 4d10",    2.20f, desc_transition},
+    {47, "Ag", "Silver",    107.87f, 11, 5, CAT_TRANSITION, "[Kr] 4d10 5s1",1.93f, desc_transition},
+    {48, "Cd", "Cadmium",   112.41f, 12, 5, CAT_TRANSITION, "[Kr] 4d10 5s2",1.69f, desc_transition},
+    {49, "In", "Indium",    114.82f, 13, 5, CAT_POST_TRANS,"[Kr] 4d10 5s2 5p1", 1.78f, desc_post},
+    {50, "Sn", "Tin",       118.71f, 14, 5, CAT_POST_TRANS,"[Kr] 4d10 5s2 5p2", 1.96f, desc_post},
+    {51, "Sb", "Antimony",  121.76f, 15, 5, CAT_METALLOID, "[Kr] 4d10 5s2 5p3", 2.05f, desc_metalloid},
+    {52, "Te", "Tellurium", 127.60f, 16, 5, CAT_METALLOID, "[Kr] 4d10 5s2 5p4", 2.10f, desc_metalloid},
+    {53, "I",  "Iodine",    126.90f, 17, 5, CAT_HALOGEN,   "[Kr] 4d10 5s2 5p5", 2.66f, desc_halogen},
+    {54, "Xe", "Xenon",     131.29f, 18, 5, CAT_NOBLE_GAS, "[Kr] 4d10 5s2 5p6", 0.00f, desc_noble},
+    {55, "Cs", "Cesium",    132.91f,  1, 6, CAT_ALKALI,    "[Xe] 6s1",     0.79f, desc_alkali},
+    {56, "Ba", "Barium",    137.33f,  2, 6, CAT_ALKALINE,  "[Xe] 6s2",     0.89f, desc_alkaline},
+    {57, "La", "Lanthanum", 138.91f,  3, 6, CAT_LANTHANIDE,"[Xe] 5d1 6s2", 1.10f, desc_lanth},
+    {58, "Ce", "Cerium",    140.12f,  4, 8, CAT_LANTHANIDE,"[Xe] 4f1 5d1 6s2", 1.12f, desc_lanth},
+    {59, "Pr", "Praseodymium",140.91f,5, 8, CAT_LANTHANIDE,"[Xe] 4f3 6s2", 1.13f, desc_lanth},
+    {60, "Nd", "Neodymium", 144.24f,  6, 8, CAT_LANTHANIDE,"[Xe] 4f4 6s2", 1.14f, desc_lanth},
+    {61, "Pm", "Promethium",145.00f,  7, 8, CAT_LANTHANIDE,"[Xe] 4f5 6s2", 1.13f, desc_lanth},
+    {62, "Sm", "Samarium",  150.36f,  8, 8, CAT_LANTHANIDE,"[Xe] 4f6 6s2", 1.17f, desc_lanth},
+    {63, "Eu", "Europium",  151.96f,  9, 8, CAT_LANTHANIDE,"[Xe] 4f7 6s2", 1.20f, desc_lanth},
+    {64, "Gd", "Gadolinium",157.25f, 10, 8, CAT_LANTHANIDE,"[Xe] 4f7 5d1 6s2", 1.20f, desc_lanth},
+    {65, "Tb", "Terbium",   158.93f, 11, 8, CAT_LANTHANIDE,"[Xe] 4f9 6s2", 1.10f, desc_lanth},
+    {66, "Dy", "Dysprosium",162.50f, 12, 8, CAT_LANTHANIDE,"[Xe] 4f10 6s2", 1.22f, desc_lanth},
+    {67, "Ho", "Holmium",   164.93f, 13, 8, CAT_LANTHANIDE,"[Xe] 4f11 6s2", 1.23f, desc_lanth},
+    {68, "Er", "Erbium",    167.26f, 14, 8, CAT_LANTHANIDE,"[Xe] 4f12 6s2", 1.24f, desc_lanth},
+    {69, "Tm", "Thulium",   168.93f, 15, 8, CAT_LANTHANIDE,"[Xe] 4f13 6s2", 1.25f, desc_lanth},
+    {70, "Yb", "Ytterbium", 173.05f, 16, 8, CAT_LANTHANIDE,"[Xe] 4f14 6s2", 1.10f, desc_lanth},
+    {71, "Lu", "Lutetium",  174.97f, 17, 8, CAT_LANTHANIDE,"[Xe] 4f14 5d1 6s2", 1.27f, desc_lanth},
+    {72, "Hf", "Hafnium",   178.49f,  4, 6, CAT_TRANSITION,"[Xe] 4f14 5d2 6s2", 1.30f, desc_transition},
+    {73, "Ta", "Tantalum",  180.95f,  5, 6, CAT_TRANSITION,"[Xe] 4f14 5d3 6s2", 1.50f, desc_transition},
+    {74, "W",  "Tungsten",  183.84f,  6, 6, CAT_TRANSITION,"[Xe] 4f14 5d4 6s2", 2.36f, desc_transition},
+    {75, "Re", "Rhenium",   186.21f,  7, 6, CAT_TRANSITION,"[Xe] 4f14 5d5 6s2", 1.90f, desc_transition},
+    {76, "Os", "Osmium",    190.23f,  8, 6, CAT_TRANSITION,"[Xe] 4f14 5d6 6s2", 2.20f, desc_transition},
+    {77, "Ir", "Iridium",   192.22f,  9, 6, CAT_TRANSITION,"[Xe] 4f14 5d7 6s2", 2.20f, desc_transition},
+    {78, "Pt", "Platinum",  195.08f, 10, 6, CAT_TRANSITION,"[Xe] 4f14 5d9 6s1", 2.28f, desc_transition},
+    {79, "Au", "Gold",      196.97f, 11, 6, CAT_TRANSITION,"[Xe] 4f14 5d10 6s1", 2.54f, desc_transition},
+    {80, "Hg", "Mercury",   200.59f, 12, 6, CAT_TRANSITION,"[Xe] 4f14 5d10 6s2", 2.00f, desc_transition},
+    {81, "Tl", "Thallium",  204.38f, 13, 6, CAT_POST_TRANS,"[Xe] 4f14 5d10 6s2 6p1", 1.62f, desc_post},
+    {82, "Pb", "Lead",      207.20f, 14, 6, CAT_POST_TRANS,"[Xe] 4f14 5d10 6s2 6p2", 2.33f, desc_post},
+    {83, "Bi", "Bismuth",   208.98f, 15, 6, CAT_POST_TRANS,"[Xe] 4f14 5d10 6s2 6p3", 2.02f, desc_post},
+    {84, "Po", "Polonium",  209.00f, 16, 6, CAT_METALLOID, "[Xe] 4f14 5d10 6s2 6p4", 2.00f, desc_metalloid},
+    {85, "At", "Astatine",  210.00f, 17, 6, CAT_HALOGEN,   "[Xe] 4f14 5d10 6s2 6p5", 2.20f, desc_halogen},
+    {86, "Rn", "Radon",     222.00f, 18, 6, CAT_NOBLE_GAS, "[Xe] 4f14 5d10 6s2 6p6", 0.00f, desc_noble},
+    {87, "Fr", "Francium",  223.00f,  1, 7, CAT_ALKALI,    "[Rn] 7s1",     0.70f, desc_alkali},
+    {88, "Ra", "Radium",    226.00f,  2, 7, CAT_ALKALINE,  "[Rn] 7s2",     0.90f, desc_alkaline},
+    {89, "Ac", "Actinium",  227.00f,  3, 7, CAT_ACTINIDE,  "[Rn] 6d1 7s2", 1.10f, desc_act},
+    {90, "Th", "Thorium",   232.04f,  4, 9, CAT_ACTINIDE,  "[Rn] 6d2 7s2", 1.30f, desc_act},
+    {91, "Pa", "Protactinium",231.04f,5, 9, CAT_ACTINIDE,  "[Rn] 5f2 6d1 7s2", 1.50f, desc_act},
+    {92, "U",  "Uranium",   238.03f,  6, 9, CAT_ACTINIDE,  "[Rn] 5f3 6d1 7s2", 1.38f, desc_act},
+    {93, "Np", "Neptunium", 237.00f,  7, 9, CAT_ACTINIDE,  "[Rn] 5f4 6d1 7s2", 0.00f, desc_act},
+    {94, "Pu", "Plutonium", 244.00f,  8, 9, CAT_ACTINIDE,  "[Rn] 5f6 7s2", 0.00f, desc_act},
+    {95, "Am", "Americium", 243.00f,  9, 9, CAT_ACTINIDE,  "[Rn] 5f7 7s2", 0.00f, desc_act},
+    {96, "Cm", "Curium",    247.00f, 10, 9, CAT_ACTINIDE,  "[Rn] 5f7 6d1 7s2", 0.00f, desc_act},
+    {97, "Bk", "Berkelium", 247.00f, 11, 9, CAT_ACTINIDE,  "[Rn] 5f9 7s2", 0.00f, desc_act},
+    {98, "Cf", "Californium",251.00f,12,9, CAT_ACTINIDE,  "[Rn] 5f10 7s2", 0.00f, desc_act},
+    {99, "Es", "Einsteinium",252.00f,13,9, CAT_ACTINIDE,  "[Rn] 5f11 7s2", 0.00f, desc_act},
+    {100,"Fm", "Fermium",   257.00f, 14, 9, CAT_ACTINIDE,  "[Rn] 5f12 7s2", 0.00f, desc_act},
+    {101,"Md", "Mendelevium",258.00f,15,9, CAT_ACTINIDE,  "[Rn] 5f13 7s2", 0.00f, desc_act},
+    {102,"No", "Nobelium",  259.00f, 16, 9, CAT_ACTINIDE,  "[Rn] 5f14 7s2", 0.00f, desc_act},
+    {103,"Lr", "Lawrencium",262.00f, 17, 9, CAT_ACTINIDE,  "[Rn] 5f14 7s2 7p1", 0.00f, desc_act},
+    {104,"Rf", "Rutherfordium",267.00f,4, 7, CAT_TRANSITION, "[Rn] 5f14 6d2 7s2", 0.00f, desc_synth},
+    {105,"Db", "Dubnium",   268.00f, 5, 7, CAT_TRANSITION, "[Rn] 5f14 6d3 7s2", 0.00f, desc_synth},
+    {106,"Sg", "Seaborgium",271.00f, 6, 7, CAT_TRANSITION, "[Rn] 5f14 6d4 7s2", 0.00f, desc_synth},
+    {107,"Bh", "Bohrium",   270.00f, 7, 7, CAT_TRANSITION, "[Rn] 5f14 6d5 7s2", 0.00f, desc_synth},
+    {108,"Hs", "Hassium",   277.00f, 8, 7, CAT_TRANSITION, "[Rn] 5f14 6d6 7s2", 0.00f, desc_synth},
+    {109,"Mt", "Meitnerium",278.00f, 9, 7, CAT_TRANSITION, "[Rn] 5f14 6d7 7s2", 0.00f, desc_synth},
+    {110,"Ds", "Darmstadtium",281.00f,10,7, CAT_TRANSITION,"[Rn] 5f14 6d8 7s2", 0.00f, desc_synth},
+    {111,"Rg", "Roentgenium",282.00f,11,7, CAT_TRANSITION,"[Rn] 5f14 6d9 7s2", 0.00f, desc_synth},
+    {112,"Cn", "Copernicium",285.00f,12,7, CAT_TRANSITION,"[Rn] 5f14 6d10 7s2", 0.00f, desc_synth},
+    {113,"Nh", "Nihonium",  286.00f, 13,7, CAT_POST_TRANS,"[Rn] 5f14 6d10 7s2 7p1", 0.00f, desc_synth},
+    {114,"Fl", "Flerovium", 289.00f, 14,7, CAT_POST_TRANS,"[Rn] 5f14 6d10 7s2 7p2", 0.00f, desc_synth},
+    {115,"Mc", "Moscovium", 290.00f, 15,7, CAT_POST_TRANS,"[Rn] 5f14 6d10 7s2 7p3", 0.00f, desc_synth},
+    {116,"Lv", "Livermorium",293.00f,16,7, CAT_POST_TRANS,"[Rn] 5f14 6d10 7s2 7p4", 0.00f, desc_synth},
+    {117,"Ts", "Tennessine",294.00f, 17,7, CAT_HALOGEN,   "[Rn] 5f14 6d10 7s2 7p5", 0.00f, desc_synth},
+    {118,"Og", "Oganesson", 294.00f, 18,7, CAT_NOBLE_GAS, "[Rn] 5f14 6d10 7s2 7p6", 0.00f, desc_synth},
 };
-#define PT_COUNT 36
+#define PT_COUNT 118
 
 // ---- Molecule definitions for 3D view ----
 
@@ -285,7 +383,7 @@ static void chemistry_update(Rectangle area) {
 
     if (chem_view == CHEM_MOLECULE_VIEW) {
         Rectangle view3d = { area.x + SIDEBAR_W, area.y, area.width - SIDEBAR_W, area.height };
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         bool in_view = CheckCollisionPointRec(mouse, view3d);
 
         if (in_view && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -337,24 +435,59 @@ static void draw_ml(const char *text, float x, float *y, int fsz, Color color) {
 static void draw_periodic_table(Rectangle area) {
     DrawRectangleRec(area, COL_BG);
 
-    float pad = 12;
-    float avail_w = area.width - pad * 2;
-    float avail_h = area.height - pad * 2 - 30; // leave room for title
+    float pad = 14;
+    float gap = 16;
+    Rectangle content = ui_pad(area, pad);
 
-    float cell_w = avail_w / 18.0f;
-    float cell_h = avail_h / 7.0f;
-    if (cell_w > 65) cell_w = 65;
-    if (cell_h > 70) cell_h = 70;
+    float aspect = (float)GetScreenWidth() / (float)GetScreenHeight();
+    bool side_by_side = aspect >= 1.45f;
+
+    float weights_row[2] = {3.4f, 1.6f};
+    float weights_col[2] = {3.0f, 2.0f};
+    Rectangle table_area = side_by_side
+        ? ui_layout_row(content, 2, 0, gap, weights_row)
+        : ui_layout_col(content, 2, 0, gap, weights_col);
+    Rectangle info_area = side_by_side
+        ? ui_layout_row(content, 2, 1, gap, weights_row)
+        : ui_layout_col(content, 2, 1, gap, weights_col);
+
+    Rectangle table_inner = ui_pad(table_area, 6);
+    ui_draw_text("Periodic Table of Elements", (int)table_inner.x, (int)table_inner.y, FONT_SIZE_LARGE, COL_ACCENT);
+    float title_h = FONT_SIZE_LARGE + 10;
+    table_inner.y += title_h;
+    table_inner.height -= title_h;
+
+    float legend_h = 44;
+    Rectangle grid_area = table_inner;
+    if (grid_area.height > legend_h + 80) {
+        grid_area.height -= legend_h;
+    } else {
+        legend_h = 26;
+        grid_area.height -= legend_h;
+    }
+
+    int max_period = 0;
+    for (int i = 0; i < PT_COUNT; i++) {
+        if (periodic_table[i].period > max_period)
+            max_period = periodic_table[i].period;
+    }
+    if (max_period < 1) max_period = 1;
+
+    float cell_w = grid_area.width / 18.0f;
+    float cell_h = grid_area.height / (float)max_period;
+    float min_cell = 32;
+    float max_cell = 72;
+    if (cell_w < min_cell) cell_w = min_cell;
+    if (cell_w > max_cell) cell_w = max_cell;
+    if (cell_h < min_cell) cell_h = min_cell;
+    if (cell_h > max_cell) cell_h = max_cell;
 
     float table_w = cell_w * 18;
-    float table_h = cell_h * 7;
-    float ox = area.x + (area.width - table_w) / 2;
-    float oy = area.y + pad + 28;
+    float table_h = cell_h * max_period;
+    float ox = grid_area.x + (grid_area.width - table_w) / 2;
+    float oy = grid_area.y + (grid_area.height - table_h) / 2;
 
-    // Title
-    ui_draw_text("Periodic Table of Elements", (int)ox, (int)(area.y + pad), FONT_SIZE_LARGE, COL_ACCENT);
-
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
 
     for (int i = 0; i < PT_COUNT; i++) {
         const PTElement *el = &periodic_table[i];
@@ -409,66 +542,74 @@ static void draw_periodic_table(Rectangle area) {
     }
 
     // Category legend at bottom
-    float ly = oy + table_h + 8;
-    float lx = ox;
+    float ly = grid_area.y + grid_area.height + 6;
+    float lx = grid_area.x;
+    float max_x = grid_area.x + grid_area.width;
     for (int c = 0; c < CAT_COUNT; c++) {
-        if (lx + 140 > ox + table_w) {
-            lx = ox;
+        int name_w = ui_measure_text(cat_names[c], FONT_SIZE_TINY);
+        float item_w = 14 + name_w + 12;
+        if (lx + item_w > max_x) {
+            lx = grid_area.x;
             ly += 18;
         }
         DrawRectangle((int)lx, (int)ly, 10, 10, cat_colors[c]);
         ui_draw_text(cat_names[c], (int)lx + 14, (int)ly - 1, FONT_SIZE_TINY, COL_TEXT_DIM);
-        lx += 145;
+        lx += item_w;
     }
 
-    // Selected element info panel (overlay at bottom-right)
+    // Selected element info panel
+    DrawRectangleRounded(
+        info_area, 0.08f, 8,
+        (Color){COL_PANEL.r, COL_PANEL.g, COL_PANEL.b, 235}
+    );
+
     if (selected_element >= 0) {
         const PTElement *el = &periodic_table[selected_element];
-        float pw = 300;
-        float ph = 180;
-        float px = area.x + area.width - pw - 12;
-        float py = area.y + area.height - ph - 12;
+        DrawRectangleRoundedLinesEx(info_area, 0.08f, 8, 1.5f, cat_colors[el->cat]);
 
-        DrawRectangleRounded(
-            (Rectangle){px, py, pw, ph}, 0.08f, 8,
-            (Color){COL_PANEL.r, COL_PANEL.g, COL_PANEL.b, 240}
-        );
-        DrawRectangleRoundedLinesEx(
-            (Rectangle){px, py, pw, ph}, 0.08f, 8, 1.5f, cat_colors[el->cat]
-        );
-
-        float iy = py + 8;
+        Rectangle inner = ui_pad(info_area, 10);
+        float iy = inner.y;
 
         // Symbol + name
         char title[64];
         snprintf(title, sizeof(title), "%s - %s", el->symbol, el->name);
-        ui_draw_text(title, (int)(px + 12), (int)iy, FONT_SIZE_DEFAULT, cat_colors[el->cat]);
-        iy += 24;
+        ui_draw_text(title, (int)inner.x, (int)iy, FONT_SIZE_DEFAULT, cat_colors[el->cat]);
+        iy += FONT_SIZE_DEFAULT + 6;
 
         char info[128];
         snprintf(info, sizeof(info), "Atomic Number: %d", el->Z);
-        ui_draw_text(info, (int)(px + 12), (int)iy, FONT_SIZE_SMALL, COL_TEXT);
-        iy += 18;
+        ui_draw_text(info, (int)inner.x, (int)iy, FONT_SIZE_SMALL, COL_TEXT);
+        iy += FONT_SIZE_SMALL + 4;
 
         snprintf(info, sizeof(info), "Atomic Mass: %.3f u", el->mass);
-        ui_draw_text(info, (int)(px + 12), (int)iy, FONT_SIZE_SMALL, COL_TEXT);
-        iy += 18;
+        ui_draw_text(info, (int)inner.x, (int)iy, FONT_SIZE_SMALL, COL_TEXT);
+        iy += FONT_SIZE_SMALL + 4;
 
         snprintf(info, sizeof(info), "Config: %s", el->electron_config);
-        ui_draw_text(info, (int)(px + 12), (int)iy, FONT_SIZE_SMALL, COL_TEXT);
-        iy += 18;
+        ui_draw_text(info, (int)inner.x, (int)iy, FONT_SIZE_SMALL, COL_TEXT);
+        iy += FONT_SIZE_SMALL + 4;
 
         if (el->electronegativity > 0.01f) {
             snprintf(info, sizeof(info), "Electronegativity: %.2f", el->electronegativity);
-            ui_draw_text(info, (int)(px + 12), (int)iy, FONT_SIZE_SMALL, COL_TEXT);
-            iy += 18;
+            ui_draw_text(info, (int)inner.x, (int)iy, FONT_SIZE_SMALL, COL_TEXT);
+            iy += FONT_SIZE_SMALL + 4;
         }
 
         snprintf(info, sizeof(info), "Category: %s", cat_names[el->cat]);
-        ui_draw_text(info, (int)(px + 12), (int)iy, FONT_SIZE_SMALL, COL_TEXT_DIM);
-        iy += 20;
+        ui_draw_text(info, (int)inner.x, (int)iy, FONT_SIZE_SMALL, COL_TEXT_DIM);
+        iy += FONT_SIZE_SMALL + 6;
 
-        draw_ml(el->description, px + 12, &iy, FONT_SIZE_TINY, COL_TEXT_DIM);
+        draw_ml(el->description, inner.x, &iy, FONT_SIZE_TINY, COL_TEXT_DIM);
+    } else {
+        DrawRectangleRoundedLinesEx(info_area, 0.08f, 8, 1.5f, COL_GRID);
+        const char *msg1 = "Click an element";
+        const char *msg2 = "to view details";
+        int mw1 = ui_measure_text(msg1, FONT_SIZE_SMALL);
+        int mw2 = ui_measure_text(msg2, FONT_SIZE_SMALL);
+        float cx = info_area.x + info_area.width / 2.0f;
+        float cy = info_area.y + info_area.height / 2.0f;
+        ui_draw_text(msg1, (int)(cx - mw1 / 2), (int)(cy - 12), FONT_SIZE_SMALL, COL_TEXT_DIM);
+        ui_draw_text(msg2, (int)(cx - mw2 / 2), (int)(cy + 4), FONT_SIZE_SMALL, COL_TEXT_DIM);
     }
 }
 
@@ -541,7 +682,7 @@ static void draw_molecule_view(Rectangle area) {
     // Back button
     {
         Rectangle back_btn = { sx, sy, 80, 26 };
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         bool hov = CheckCollisionPointRec(mouse, back_btn);
         DrawRectangleRounded(back_btn, 0.3f, 6, hov ? (Color){60,62,72,255} : COL_TAB);
         ui_draw_text("< Table", (int)sx + 10, (int)sy + 5, FONT_SIZE_SMALL,
@@ -559,7 +700,7 @@ static void draw_molecule_view(Rectangle area) {
     // Molecule selector buttons
     for (int i = 0; i < MOL_COUNT; i++) {
         Rectangle btn = { sx, sy, sw, 28 };
-        Vector2 mouse = GetMousePosition();
+        Vector2 mouse = ui_mouse();
         bool hov = CheckCollisionPointRec(mouse, btn);
         bool sel = (i == selected_molecule);
 
@@ -627,7 +768,7 @@ static void draw_molecule_view(Rectangle area) {
     Rectangle view3d = { area.x + SIDEBAR_W, area.y, area.width - SIDEBAR_W, area.height };
     DrawRectangleRec(view3d, COL_BG);
 
-    BeginScissorMode((int)view3d.x, (int)view3d.y, (int)view3d.width, (int)view3d.height);
+    ui_scissor_begin((int)view3d.x, (int)view3d.y, (int)view3d.width, (int)view3d.height);
     BeginMode3D(mol_cam);
 
     draw_molecule_3d(mol, chem_time);
@@ -652,15 +793,17 @@ static void draw_molecule_view(Rectangle area) {
     // Atom labels in 3D view (projected to screen)
     for (int i = 0; i < mol->atom_count; i++) {
         Vector2 sp = GetWorldToScreen(mol->atoms[i].pos, mol_cam);
-        if (sp.x > view3d.x && sp.x < view3d.x + view3d.width &&
-            sp.y > view3d.y && sp.y < view3d.y + view3d.height) {
+        Vector2 sp_ui = ui_from_screen(sp);
+        if (sp_ui.x > view3d.x && sp_ui.x < view3d.x + view3d.width &&
+            sp_ui.y > view3d.y && sp_ui.y < view3d.y + view3d.height) {
             int lw = ui_measure_text(mol->atoms[i].symbol, FONT_SIZE_TINY);
             DrawRectangleRounded(
-                (Rectangle){sp.x - lw/2 - 3, sp.y - 20, (float)(lw + 6), 16},
+                (Rectangle){sp_ui.x - lw/2 - 3, sp_ui.y - 20, (float)(lw + 6), 16},
                 0.4f, 4, (Color){mol->atoms[i].color.r, mol->atoms[i].color.g,
                                   mol->atoms[i].color.b, 180}
             );
-            ui_draw_text(mol->atoms[i].symbol, (int)(sp.x - lw/2), (int)(sp.y - 19), FONT_SIZE_TINY, WHITE);
+            ui_draw_text(mol->atoms[i].symbol, (int)(sp_ui.x - lw/2), (int)(sp_ui.y - 19),
+                         FONT_SIZE_TINY, WHITE);
         }
     }
 }
@@ -671,7 +814,7 @@ static void draw_view_switcher(Rectangle area) {
     float bx = area.x + area.width - 140;
     float by = area.y + 12;
     Rectangle btn = { bx, by, 128, 28 };
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool hov = CheckCollisionPointRec(mouse, btn);
 
     DrawRectangleRounded(btn, 0.3f, 6, hov ? COL_ACCENT : COL_TAB);

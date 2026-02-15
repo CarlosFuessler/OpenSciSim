@@ -7,6 +7,8 @@
 #define WINDOW_W 1280
 #define WINDOW_H 800
 #define TARGET_FPS 60
+#define UI_MIN_SCALE 0.75f
+#define UI_MAX_SCALE 1.5f
 
 // Font
 #define FONT_PATH "assets/fonts/JetBrainsMono-Regular.ttf"

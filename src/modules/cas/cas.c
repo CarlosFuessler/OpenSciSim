@@ -18,6 +18,24 @@
 #define TEMPLATE_W    48
 #define TEMPLATE_GAP   4
 
+static void cas_layout(Rectangle area, Rectangle *sidebar, Rectangle *plot_area, bool *side_by_side) {
+    float aspect = (float)GetScreenWidth() / (float)GetScreenHeight();
+    float gap = 12.0f;
+    Rectangle content = ui_pad(area, 10.0f);
+    bool side = aspect >= 1.35f;
+    float weights_row[2] = {1.2f, 2.4f};
+    float weights_col[2] = {1.6f, 2.4f};
+
+    if (side) {
+        *sidebar = ui_layout_row(content, 2, 0, gap, weights_row);
+        *plot_area = ui_layout_row(content, 2, 1, gap, weights_row);
+    } else {
+        *sidebar = ui_layout_col(content, 2, 0, gap, weights_col);
+        *plot_area = ui_layout_col(content, 2, 1, gap, weights_col);
+    }
+    if (side_by_side) *side_by_side = side;
+}
+
 typedef enum { MODE_2D, MODE_3D } CASMode;
 
 static Arena       cas_arena;
@@ -222,10 +240,10 @@ static void insert_template(const char *text) {
 }
 
 static void cas_update(Rectangle area) {
-    Rectangle plot_area = {
-        area.x + SIDEBAR_W, area.y,
-        area.width - SIDEBAR_W, area.height
-    };
+    Rectangle sidebar = {0};
+    Rectangle plot_area = {0};
+    cas_layout(area, &sidebar, &plot_area, NULL);
+    (void)sidebar;
     if (cas_mode == MODE_3D)
         plotter3d_update(&plot3d, plot_area);
     else
@@ -240,7 +258,7 @@ static float draw_func_row_ex(int index, float x, float y, float w,
     (void)count;
     FuncSlot *slot = &slots[index];
     Color col = PLOT_COLORS[slot->color_idx % PLOT_COLOR_COUNT];
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     bool is_editing = (active_field == index);
 
     // Row background
@@ -349,7 +367,7 @@ static float draw_surf_row(int index, float x, float y, float w) {
 static float draw_vec_row(int index, float x, float y, float w) {
     VecEntry *v = &plot3d.vecs[index];
     Color col = PLOT_COLORS[v->color_idx % PLOT_COLOR_COUNT];
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
 
     Rectangle row = { x, y, w, ROW_HEIGHT };
     bool row_hovered = CheckCollisionPointRec(mouse, row);
@@ -461,7 +479,7 @@ static float draw_mode_toggle(float x, float y, float w) {
     Rectangle btn_2d = { x, y, btn_w, btn_h };
     Rectangle btn_3d = { x + btn_w + 4, y, btn_w, btn_h };
 
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
 
     // 2D button
     bool hov_2d = CheckCollisionPointRec(mouse, btn_2d);
@@ -495,15 +513,25 @@ static float draw_mode_toggle(float x, float y, float w) {
 }
 
 static void cas_draw(Rectangle area) {
-    // Sidebar
-    Rectangle sidebar = { area.x, area.y, SIDEBAR_W, area.height };
-    DrawRectangleRec(sidebar, COL_PANEL);
-    DrawLine((int)(area.x + SIDEBAR_W), (int)area.y,
-             (int)(area.x + SIDEBAR_W), (int)(area.y + area.height), COL_GRID);
+    // Layout
+    Rectangle sidebar = {0};
+    Rectangle plot_area = {0};
+    bool side_by_side = true;
+    cas_layout(area, &sidebar, &plot_area, &side_by_side);
 
-    float sx = area.x + 8;
-    float sw = SIDEBAR_W - 16;
-    float sy = area.y + 8;
+    // Sidebar
+    DrawRectangleRec(sidebar, COL_PANEL);
+    if (side_by_side) {
+        DrawLine((int)(sidebar.x + sidebar.width), (int)sidebar.y,
+                 (int)(sidebar.x + sidebar.width), (int)(sidebar.y + sidebar.height), COL_GRID);
+    } else {
+        DrawLine((int)sidebar.x, (int)(sidebar.y + sidebar.height),
+                 (int)(sidebar.x + sidebar.width), (int)(sidebar.y + sidebar.height), COL_GRID);
+    }
+
+    float sx = sidebar.x + 8;
+    float sw = sidebar.width - 16;
+    float sy = sidebar.y + 8;
 
     // Title
     const char *title = (cas_mode == MODE_3D) ? "3D Algebra" : "Algebra";
@@ -525,9 +553,9 @@ static void cas_draw(Rectangle area) {
     sy += 8;
 
     float list_start = sy;
-    float list_end = area.y + area.height - 80;
+    float list_end = sidebar.y + sidebar.height - 80;
 
-    BeginScissorMode((int)area.x, (int)list_start, (int)SIDEBAR_W, (int)(list_end - list_start));
+    ui_scissor_begin(sidebar.x, list_start, sidebar.width, list_end - list_start);
 
     float cy = list_start - scroll_y;
 
@@ -565,7 +593,7 @@ static void cas_draw(Rectangle area) {
                     new_buf[0] = '\0';
                 }
             } else {
-                bool field_hov = CheckCollisionPointRec(GetMousePosition(), field_rect);
+                bool field_hov = CheckCollisionPointRec(ui_mouse(), field_rect);
                 if (field_hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     active_field = MAX_FUNCTIONS;
                     new_active = true;
@@ -618,7 +646,7 @@ static void cas_draw(Rectangle area) {
                     new_buf[0] = '\0';
                 }
             } else {
-                bool field_hov = CheckCollisionPointRec(GetMousePosition(), field_rect);
+                bool field_hov = CheckCollisionPointRec(ui_mouse(), field_rect);
                 if (field_hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     active_field = MAX_FUNCTIONS;
                     new_active = true;
@@ -676,7 +704,7 @@ static void cas_draw(Rectangle area) {
     EndScissorMode();
 
     // Scroll with mouse wheel when hovering sidebar
-    Vector2 mouse = GetMousePosition();
+    Vector2 mouse = ui_mouse();
     if (CheckCollisionPointRec(mouse, sidebar)) {
         float wheel = GetMouseWheelMove();
         scroll_y -= wheel * 30.0f;
@@ -693,7 +721,7 @@ static void cas_draw(Rectangle area) {
     }
 
     // Help footer
-    float help_y = area.y + area.height - 54;
+    float help_y = sidebar.y + sidebar.height - 54;
     DrawLine((int)sx, (int)help_y, (int)(sx + sw), (int)help_y, COL_GRID);
     help_y += 6;
     if (cas_mode == MODE_3D) {
@@ -707,10 +735,6 @@ static void cas_draw(Rectangle area) {
     }
 
     // Plot area
-    Rectangle plot_area = {
-        area.x + SIDEBAR_W, area.y,
-        area.width - SIDEBAR_W, area.height
-    };
     if (cas_mode == MODE_3D)
         plotter3d_draw(&plot3d, plot_area, &cas_arena);
     else

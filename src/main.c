@@ -2,9 +2,12 @@
 #include "ui/ui.h"
 #include "ui/theme.h"
 #include "modules/cas/cas.h"
+#include "modules/mathsim/mathsim.h"
 #include "modules/calc/calc.h"
 #include "modules/physics/physics.h"
+#include "modules/physics/mechanics.h"
 #include "modules/chemistry/chemistry.h"
+#include "modules/chemistry/chemsim.h"
 #include <stddef.h>
 
 #if defined(PLATFORM_WEB)
@@ -40,8 +43,11 @@ int main(void) {
     // Register modules into topics
     ui_register_module(&ui, math, cas_module());
     ui_register_module(&ui, math, calc_module());
+    ui_register_module(&ui, math, mathsim_module());
     ui_register_module(&ui, phys, physics_module());
+    ui_register_module(&ui, phys, mechanics_module());
     ui_register_module(&ui, chem, chemistry_module());
+    ui_register_module(&ui, chem, chemsim_module());
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(game_frame, TARGET_FPS, 1);
