@@ -2,3 +2,4 @@
 result
 openscisim
 *.o
+build/

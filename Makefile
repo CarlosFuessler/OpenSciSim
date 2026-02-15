@@ -10,12 +10,25 @@ SRC = src/main.c \
       src/modules/cas/eval.c \
       src/modules/cas/plotter.c \
       src/modules/cas/plotter3d.c \
-      src/modules/calc/calc.c
+      src/modules/calc/calc.c \
+      src/modules/physics/physics.c \
+      src/modules/chemistry/chemistry.c
 
 OBJ = $(SRC:.c=.o)
 BIN = openscisim
 
-.PHONY: all clean run
+# WASM / Emscripten settings
+RAYLIB_PATH ?= $(HOME)/raylib
+WEB_DIR = build/web
+EMCC = emcc
+EMCFLAGS = -Wall -Wextra -std=c11 -I src -I $(RAYLIB_PATH)/src \
+           -Os -DPLATFORM_WEB
+EMLDFLAGS = $(RAYLIB_PATH)/src/libraylib.a -lm \
+            -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 \
+            -s FORCE_FILESYSTEM=1 \
+            --preload-file assets
+
+.PHONY: all clean run web web-clean web-serve
 
 all: $(BIN)
 
@@ -30,3 +43,19 @@ run: $(BIN)
 
 clean:
 	rm -f $(OBJ) $(BIN)
+
+# --- WASM targets ---
+
+web: $(WEB_DIR)/index.html
+
+$(WEB_DIR)/index.html: $(SRC)
+	@mkdir -p $(WEB_DIR)
+	$(EMCC) $(EMCFLAGS) $(SRC) -o $(WEB_DIR)/index.html $(EMLDFLAGS)
+	@echo "✓ WASM build complete → $(WEB_DIR)/index.html"
+
+web-clean:
+	rm -rf $(WEB_DIR)
+
+web-serve: $(WEB_DIR)/index.html
+	@echo "Serving at http://localhost:8080"
+	cd $(WEB_DIR) && python3 -m http.server 8080

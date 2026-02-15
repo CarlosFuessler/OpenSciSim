@@ -31,10 +31,10 @@ void plotter_update(PlotState *ps, Rectangle area) {
             double mx_before = ps->center_x + (mouse.x - area.x - area.width / 2.0) / ps->scale;
             double my_before = ps->center_y - (mouse.y - area.y - area.height / 2.0) / ps->scale;
 
-            double factor = (wheel > 0) ? 1.1 : 1.0 / 1.1;
+            double factor = (wheel > 0) ? 1.15 : 1.0 / 1.15;
             ps->scale *= factor;
-            if (ps->scale < 5.0)    ps->scale = 5.0;
-            if (ps->scale > 5000.0) ps->scale = 5000.0;
+            if (ps->scale < 2.0)    ps->scale = 2.0;
+            if (ps->scale > 10000.0) ps->scale = 10000.0;
 
             double mx_after = ps->center_x + (mouse.x - area.x - area.width / 2.0) / ps->scale;
             double my_after = ps->center_y - (mouse.y - area.y - area.height / 2.0) / ps->scale;
@@ -116,7 +116,7 @@ static void draw_grid(PlotState *ps, Rectangle area) {
         float ly = axis_pos.y + 4;
         if (ly < area.y + 2) ly = area.y + 2;
         if (ly > area.y + area.height - 16) ly = area.y + area.height - 16;
-        ui_draw_text(label, (int)axis_pos.x + 4, (int)ly, 12, COL_TEXT_DIM);
+        ui_draw_text(label, (int)axis_pos.x + 4, (int)ly, FONT_SIZE_TINY, COL_TEXT_DIM);
     }
 
     double y_start = floor(y_min / step) * step;
@@ -131,7 +131,7 @@ static void draw_grid(PlotState *ps, Rectangle area) {
             Vector2 axis_pos = math_to_screen(ps, area, 0, gy);
             float lx = axis_pos.x + 4;
             if (lx < area.x + 2) lx = area.x + 2;
-            ui_draw_text(label, (int)lx, (int)axis_pos.y - 14, 12, COL_TEXT_DIM);
+            ui_draw_text(label, (int)lx, (int)axis_pos.y - 14, FONT_SIZE_TINY, COL_TEXT_DIM);
         }
     }
 
@@ -197,12 +197,12 @@ void plotter_draw(PlotState *ps, Rectangle area, Arena *arena) {
                 pt.y > area.y + 20 && pt.y < area.y + area.height - 20) {
                 // Background pill behind label
                 const char *lbl = ps->funcs[fi].name;
-                int lw = ui_measure_text(lbl, 13);
+                int lw = ui_measure_text(lbl, FONT_SIZE_TINY);
                 DrawRectangleRounded(
                     (Rectangle){pt.x + 6, pt.y - 18, (float)(lw + 10), 20},
                     0.4f, 6, (Color){col.r, col.g, col.b, 180}
                 );
-                ui_draw_text(lbl, (int)pt.x + 11, (int)pt.y - 17, 13, WHITE);
+                ui_draw_text(lbl, (int)pt.x + 11, (int)pt.y - 17, FONT_SIZE_TINY, WHITE);
                 label_placed = true;
             }
 
@@ -226,13 +226,13 @@ void plotter_draw(PlotState *ps, Rectangle area, Arena *arena) {
         // Coordinate tooltip
         char coords[64];
         snprintf(coords, sizeof(coords), "(%.3f, %.3f)", mx, my);
-        int cw = ui_measure_text(coords, 13);
+        int cw = ui_measure_text(coords, FONT_SIZE_TINY);
         // Background for readability
         DrawRectangleRounded(
             (Rectangle){mouse.x + 14, mouse.y - 22, (float)(cw + 10), 20},
             0.3f, 6, (Color){COL_PANEL.r, COL_PANEL.g, COL_PANEL.b, 220}
         );
-        ui_draw_text(coords, (int)mouse.x + 19, (int)mouse.y - 21, 13, COL_TEXT);
+        ui_draw_text(coords, (int)mouse.x + 19, (int)mouse.y - 21, FONT_SIZE_TINY, COL_TEXT);
 
         // Show function values at cursor x
         float info_y = mouse.y + 8;
@@ -250,12 +250,12 @@ void plotter_draw(PlotState *ps, Rectangle area, Arena *arena) {
             // Value tooltip near cursor
             char val[80];
             snprintf(val, sizeof(val), "%s = %.4g", ps->funcs[fi].name, fy);
-            int vw = ui_measure_text(val, 12);
+            int vw = ui_measure_text(val, FONT_SIZE_TINY);
             DrawRectangleRounded(
                 (Rectangle){mouse.x + 14, info_y, (float)(vw + 10), 18},
                 0.3f, 6, (Color){col.r, col.g, col.b, 160}
             );
-            ui_draw_text(val, (int)mouse.x + 19, (int)info_y + 1, 12, WHITE);
+            ui_draw_text(val, (int)mouse.x + 19, (int)info_y + 1, FONT_SIZE_TINY, WHITE);
             info_y += 22;
         }
     }

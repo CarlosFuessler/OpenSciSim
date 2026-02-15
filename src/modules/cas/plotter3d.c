@@ -64,9 +64,9 @@ void plotter3d_update(Plot3DState *ps, Rectangle area) {
     if (in_area) {
         float wheel = GetMouseWheelMove();
         if (wheel != 0.0f) {
-            ps->orbit_dist -= wheel * 1.0f;
-            if (ps->orbit_dist < 3.0f)  ps->orbit_dist = 3.0f;
-            if (ps->orbit_dist > 40.0f) ps->orbit_dist = 40.0f;
+            ps->orbit_dist -= wheel * 1.5f;
+            if (ps->orbit_dist < 2.0f)  ps->orbit_dist = 2.0f;
+            if (ps->orbit_dist > 60.0f) ps->orbit_dist = 60.0f;
         }
     }
 
@@ -241,5 +241,5 @@ void plotter3d_draw(Plot3DState *ps, Rectangle area, Arena *arena) {
     // Help text at bottom-right
     float hx = area.x + area.width - 260;
     float hy = area.y + area.height - 20;
-    ui_draw_text("Drag=Orbit  Scroll=Zoom  Home=Reset", (int)hx, (int)hy, 11, COL_TEXT_DIM);
+    ui_draw_text("Drag=Orbit  Scroll=Zoom  Home=Reset", (int)hx, (int)hy, FONT_SIZE_TINY, COL_TEXT_DIM);
 }

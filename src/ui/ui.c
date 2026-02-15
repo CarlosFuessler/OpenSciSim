@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "theme.h"
 #include <string.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 
@@ -15,19 +16,32 @@ int ui_measure_text(const char *text, int fontSize) {
 }
 
 void ui_init(AppUI *ui) {
-    ui->module_count = 0;
-    ui->active_tab   = 0;
+    ui->topic_count  = 0;
+    ui->active_topic = 0;
     ui->screen       = SCREEN_START;
     ui->start_time   = 0.0f;
 }
 
-void ui_register_module(AppUI *ui, Module *mod) {
-    if (ui->module_count >= MAX_MODULES) return;
-    ui->modules[ui->module_count++] = mod;
+int ui_add_topic(AppUI *ui, const char *name, const char *subtitle, Color color) {
+    if (ui->topic_count >= MAX_TOPICS) return -1;
+    int idx = ui->topic_count++;
+    ui->topics[idx].name         = name;
+    ui->topics[idx].subtitle     = subtitle;
+    ui->topics[idx].color        = color;
+    ui->topics[idx].module_count = 0;
+    ui->topics[idx].active_tab   = 0;
+    return idx;
+}
+
+void ui_register_module(AppUI *ui, int topic_idx, Module *mod) {
+    if (topic_idx < 0 || topic_idx >= ui->topic_count) return;
+    Topic *t = &ui->topics[topic_idx];
+    if (t->module_count >= MAX_TOPIC_MODULES) return;
+    t->modules[t->module_count++] = mod;
     mod->init();
 }
 
-// Start screen
+// Start screen — topic selection
 static void draw_start_screen(AppUI *ui) {
     float t = (float)GetTime() - ui->start_time;
     int w = GetScreenWidth();
@@ -42,7 +56,7 @@ static void draw_start_screen(AppUI *ui) {
             float amp  = 40.0f + layer * 20.0f;
             float speed = 0.6f + layer * 0.3f;
             float phase = layer * 1.5f;
-            float y = h * 0.55f + sinf(px * freq + t * speed + phase) * amp;
+            float y = h * 0.45f + sinf(px * freq + t * speed + phase) * amp;
             unsigned char alpha = (unsigned char)(20 + layer * 10);
             Color col = (Color){
                 (unsigned char)(PLOT_COLORS[layer].r),
@@ -54,7 +68,7 @@ static void draw_start_screen(AppUI *ui) {
         }
     }
 
-    // Title with fade-in
+    // Title
     float title_alpha = fminf(t * 1.5f, 1.0f);
     const char *title = "OpenSciSim";
     int title_w = ui_measure_text(title, FONT_SIZE_HERO);
@@ -62,102 +76,148 @@ static void draw_start_screen(AppUI *ui) {
         COL_ACCENT.r, COL_ACCENT.g, COL_ACCENT.b,
         (unsigned char)(title_alpha * 255)
     };
-    ui_draw_text(title, (w - title_w) / 2, h / 2 - 100, FONT_SIZE_HERO, title_col);
+    ui_draw_text(title, (w - title_w) / 2, h / 4 - 40, FONT_SIZE_HERO, title_col);
 
     // Subtitle
-    float sub_alpha = fminf(fmaxf((t - 0.5f) * 1.5f, 0.0f), 1.0f);
+    float sub_alpha = fminf(fmaxf((t - 0.3f) * 2.0f, 0.0f), 1.0f);
     const char *subtitle = "Interactive Science Simulator";
     int sub_w = ui_measure_text(subtitle, FONT_SIZE_LARGE);
     Color sub_col = (Color){
         COL_TEXT.r, COL_TEXT.g, COL_TEXT.b,
         (unsigned char)(sub_alpha * 255)
     };
-    ui_draw_text(subtitle, (w - sub_w) / 2, h / 2 - 20, FONT_SIZE_LARGE, sub_col);
+    ui_draw_text(subtitle, (w - sub_w) / 2, h / 4 + 40, FONT_SIZE_LARGE, sub_col);
 
-    // Version
-    float ver_alpha = fminf(fmaxf((t - 1.0f) * 1.5f, 0.0f), 1.0f);
-    const char *version = "v0.1.0  -  Physics  |  Mathematics  |  Chemistry";
-    int ver_w = ui_measure_text(version, FONT_SIZE_SMALL);
-    Color ver_col = (Color){
-        COL_TEXT_DIM.r, COL_TEXT_DIM.g, COL_TEXT_DIM.b,
-        (unsigned char)(ver_alpha * 255)
-    };
-    ui_draw_text(version, (w - ver_w) / 2, h / 2 + 20, FONT_SIZE_SMALL, ver_col);
-
-    // "Press any key" blinking
-    if (t > 1.5f) {
-        float blink = (sinf(t * 3.0f) + 1.0f) * 0.5f;
-        const char *prompt = "Press ENTER to start";
-        int prompt_w = ui_measure_text(prompt, FONT_SIZE_DEFAULT);
-        Color prompt_col = (Color){
-            COL_ACCENT2.r, COL_ACCENT2.g, COL_ACCENT2.b,
-            (unsigned char)(blink * 200 + 55)
+    // "Choose a topic" prompt
+    float prompt_alpha = fminf(fmaxf((t - 0.6f) * 2.0f, 0.0f), 1.0f);
+    if (prompt_alpha > 0.01f) {
+        const char *prompt = "Choose a topic to explore";
+        int pw = ui_measure_text(prompt, FONT_SIZE_DEFAULT);
+        Color pc = (Color){
+            COL_TEXT_DIM.r, COL_TEXT_DIM.g, COL_TEXT_DIM.b,
+            (unsigned char)(prompt_alpha * 255)
         };
-        ui_draw_text(prompt, (w - prompt_w) / 2, h / 2 + 80, FONT_SIZE_DEFAULT, prompt_col);
+        ui_draw_text(prompt, (w - pw) / 2, h / 2 - 20, FONT_SIZE_DEFAULT, pc);
     }
 
-    // Feature cards at the bottom
-    if (t > 2.0f) {
-        float card_alpha = fminf((t - 2.0f) * 2.0f, 1.0f);
-        const char *features[] = {
-            "CAS Calculator",
-            "Function Plotter",
-            "More Coming Soon"
-        };
-        const char *descriptions[] = {
-            "Parse & evaluate expressions",
-            "Interactive zoom & pan",
-            "Physics, Chemistry, ..."
-        };
-        int card_count = 3;
-        int card_w = 220;
-        int card_h = 70;
-        int total_w = card_count * card_w + (card_count - 1) * 16;
+    // Topic cards
+    float card_alpha = fminf(fmaxf((t - 0.8f) * 2.0f, 0.0f), 1.0f);
+    if (card_alpha > 0.01f && ui->topic_count > 0) {
+        int card_w = 280;
+        int card_h = 140;
+        int gap = 24;
+        int total_w = ui->topic_count * card_w + (ui->topic_count - 1) * gap;
         int start_x = (w - total_w) / 2;
-        int card_y = h / 2 + 140;
+        int card_y = h / 2 + 20;
 
-        for (int i = 0; i < card_count; i++) {
-            int cx = start_x + i * (card_w + 16);
-            Color card_bg = (Color){
+        Vector2 mouse = GetMousePosition();
+
+        for (int i = 0; i < ui->topic_count; i++) {
+            Topic *topic = &ui->topics[i];
+            float cx = (float)(start_x + i * (card_w + gap));
+            float cy = (float)card_y;
+
+            Rectangle card = { cx, cy, (float)card_w, (float)card_h };
+            bool hovered = CheckCollisionPointRec(mouse, card);
+
+            // Hover lift effect
+            float lift = hovered ? -6.0f : 0.0f;
+            Rectangle card_draw = { cx, cy + lift, (float)card_w, (float)card_h };
+
+            // Card background
+            Color bg = (Color){
                 COL_PANEL.r, COL_PANEL.g, COL_PANEL.b,
-                (unsigned char)(card_alpha * 200)
+                (unsigned char)(card_alpha * (hovered ? 240 : 200))
             };
-            DrawRectangleRounded(
-                (Rectangle){(float)cx, (float)card_y, (float)card_w, (float)card_h},
-                0.1f, 8, card_bg
-            );
-            Color feat_col = (Color){
-                PLOT_COLORS[i].r, PLOT_COLORS[i].g, PLOT_COLORS[i].b,
+            DrawRectangleRounded(card_draw, 0.08f, 8, bg);
+
+            // Colored accent bar at top
+            Color accent = (Color){
+                topic->color.r, topic->color.g, topic->color.b,
                 (unsigned char)(card_alpha * 255)
             };
-            ui_draw_text(features[i], cx + 12, card_y + 12, FONT_SIZE_DEFAULT, feat_col);
-            Color desc_col = (Color){
+            DrawRectangleRounded(
+                (Rectangle){cx + 4, cy + lift + 4, (float)(card_w - 8), 4},
+                0.5f, 4, accent
+            );
+
+            // Border on hover
+            if (hovered) {
+                DrawRectangleRoundedLinesEx(card_draw, 0.08f, 8, 2.0f, accent);
+            }
+
+            // Topic name
+            Color name_col = (Color){
+                topic->color.r, topic->color.g, topic->color.b,
+                (unsigned char)(card_alpha * 255)
+            };
+            int nw = ui_measure_text(topic->name, FONT_SIZE_TITLE);
+            ui_draw_text(topic->name,
+                         (int)(cx + (card_w - nw) / 2),
+                         (int)(cy + lift + 28),
+                         FONT_SIZE_TITLE, name_col);
+
+            // Subtitle
+            Color sub = (Color){
                 COL_TEXT_DIM.r, COL_TEXT_DIM.g, COL_TEXT_DIM.b,
                 (unsigned char)(card_alpha * 255)
             };
-            ui_draw_text(descriptions[i], cx + 12, card_y + 38, FONT_SIZE_SMALL - 2, desc_col);
+            int sw2 = ui_measure_text(topic->subtitle, FONT_SIZE_SMALL);
+            ui_draw_text(topic->subtitle,
+                         (int)(cx + (card_w - sw2) / 2),
+                         (int)(cy + lift + 80),
+                         FONT_SIZE_SMALL, sub);
+
+            // Module count
+            char mod_info[32];
+            snprintf(mod_info, sizeof(mod_info), "%d module%s",
+                     topic->module_count, topic->module_count == 1 ? "" : "s");
+            int mi_w = ui_measure_text(mod_info, FONT_SIZE_TINY);
+            ui_draw_text(mod_info,
+                         (int)(cx + (card_w - mi_w) / 2),
+                         (int)(cy + lift + card_h - 28),
+                         FONT_SIZE_TINY, (Color){COL_TEXT_DIM.r, COL_TEXT_DIM.g, COL_TEXT_DIM.b,
+                                     (unsigned char)(card_alpha * 180)});
+
+            // Click
+            if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                ui->active_topic = i;
+                ui->screen = SCREEN_TOPIC;
+            }
         }
+    }
+
+    // Version at bottom
+    {
+        const char *ver = "v0.1.0";
+        int vw = ui_measure_text(ver, FONT_SIZE_TINY);
+        ui_draw_text(ver, (w - vw) / 2, h - 28, FONT_SIZE_TINY, COL_TEXT_DIM);
     }
 }
 
 void ui_update(AppUI *ui) {
     if (ui->screen == SCREEN_START) {
-        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) ||
-            IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            float t = (float)GetTime() - ui->start_time;
-            if (t > 1.5f) ui->screen = SCREEN_APP;
-        }
+        // Topic selection handled in draw (click detection)
         return;
     }
+
+    // SCREEN_TOPIC: inside a topic
+    Topic *topic = &ui->topics[ui->active_topic];
 
     // Tab switching with mouse click
     Vector2 mouse = GetMousePosition();
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && mouse.y < TAB_HEIGHT) {
+        // Skip the topic label area
         float x = 0;
-        for (int i = 0; i < ui->module_count; i++) {
-            float tw = (float)ui_measure_text(ui->modules[i]->name, TAB_FONT_SIZE) + TAB_PADDING * 2;
+        // Topic label width
+        float label_w = (float)ui_measure_text(topic->name, TAB_FONT_SIZE) + TAB_PADDING * 2;
+        float sep_w = 20; // separator space
+        x = label_w + sep_w;
+
+        for (int i = 0; i < topic->module_count; i++) {
+            float tw = (float)ui_measure_text(topic->modules[i]->name, TAB_FONT_SIZE) + TAB_PADDING * 2;
             if (mouse.x >= x && mouse.x < x + tw) {
-                ui->active_tab = i;
+                topic->active_tab = i;
                 break;
             }
             x += tw;
@@ -168,22 +228,22 @@ void ui_update(AppUI *ui) {
     if (IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) {
         if (IsKeyPressed(KEY_TAB)) {
             if (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT))
-                ui->active_tab = (ui->active_tab - 1 + ui->module_count) % ui->module_count;
+                topic->active_tab = (topic->active_tab - 1 + topic->module_count) % topic->module_count;
             else
-                ui->active_tab = (ui->active_tab + 1) % ui->module_count;
+                topic->active_tab = (topic->active_tab + 1) % topic->module_count;
         }
     }
 
-    // Escape key goes back to start screen
+    // Escape goes back to start screen
     if (IsKeyPressed(KEY_ESCAPE)) {
         ui->screen = SCREEN_START;
         ui->start_time = (float)GetTime();
     }
 
     // Update active module
-    if (ui->module_count > 0) {
+    if (topic->module_count > 0) {
         Rectangle area = { 0, TAB_HEIGHT, (float)GetScreenWidth(), (float)GetScreenHeight() - TAB_HEIGHT };
-        ui->modules[ui->active_tab]->update(area);
+        topic->modules[topic->active_tab]->update(area);
     }
 }
 
@@ -193,43 +253,61 @@ void ui_draw(AppUI *ui) {
         return;
     }
 
-    // Background
+    // SCREEN_TOPIC
+    Topic *topic = &ui->topics[ui->active_topic];
+
     ClearBackground(COL_BG);
 
-    // Tab bar background
+    // Tab bar
     DrawRectangle(0, 0, GetScreenWidth(), TAB_HEIGHT, COL_PANEL);
 
-    // Tabs
     float x = 0;
-    for (int i = 0; i < ui->module_count; i++) {
-        float tw = (float)ui_measure_text(ui->modules[i]->name, TAB_FONT_SIZE) + TAB_PADDING * 2;
-        bool active = (i == ui->active_tab);
 
-        // Tab background with rounded top
+    // Topic label (colored, not clickable as tab)
+    {
+        float label_w = (float)ui_measure_text(topic->name, TAB_FONT_SIZE) + TAB_PADDING * 2;
+        DrawRectangle(0, 0, (int)label_w, TAB_HEIGHT, (Color){
+            (unsigned char)(topic->color.r * 0.3f),
+            (unsigned char)(topic->color.g * 0.3f),
+            (unsigned char)(topic->color.b * 0.3f), 255
+        });
+        DrawRectangle(0, TAB_HEIGHT - 3, (int)label_w, 3, topic->color);
+        ui_draw_text(topic->name,
+                     (int)TAB_PADDING,
+                     (TAB_HEIGHT - TAB_FONT_SIZE) / 2,
+                     TAB_FONT_SIZE, topic->color);
+
+        // Separator line
+        x = label_w;
+        DrawLine((int)x, 6, (int)x, TAB_HEIGHT - 6, COL_GRID);
+        x += 20;
+    }
+
+    // Module tabs
+    for (int i = 0; i < topic->module_count; i++) {
+        float tw = (float)ui_measure_text(topic->modules[i]->name, TAB_FONT_SIZE) + TAB_PADDING * 2;
+        bool active = (i == topic->active_tab);
+
         Color bg = active ? COL_TAB_ACT : COL_TAB;
         Color fg = active ? WHITE : COL_TEXT_DIM;
 
         DrawRectangle((int)x, 0, (int)tw, TAB_HEIGHT, bg);
-
-        // Active indicator bar at bottom
         if (active) {
             DrawRectangle((int)x, TAB_HEIGHT - 3, (int)tw, 3, WHITE);
         }
 
-        ui_draw_text(ui->modules[i]->name,
+        ui_draw_text(topic->modules[i]->name,
                      (int)(x + TAB_PADDING),
                      (TAB_HEIGHT - TAB_FONT_SIZE) / 2,
                      TAB_FONT_SIZE, fg);
 
-        // Separator
         DrawLine((int)(x + tw), 4, (int)(x + tw), TAB_HEIGHT - 4, COL_BG);
         x += tw;
     }
 
-    // Bottom line under tab bar
     DrawRectangle(0, TAB_HEIGHT - 1, GetScreenWidth(), 1, COL_GRID);
 
-    // Home button (right side of tab bar)
+    // Home button (right side)
     {
         const char *home_label = "< Home";
         int hw = ui_measure_text(home_label, FONT_SIZE_SMALL) + 16;
@@ -252,9 +330,9 @@ void ui_draw(AppUI *ui) {
     }
 
     // Draw active module
-    if (ui->module_count > 0) {
+    if (topic->module_count > 0) {
         Rectangle area = { 0, (float)TAB_HEIGHT, (float)GetScreenWidth(), (float)GetScreenHeight() - TAB_HEIGHT };
-        ui->modules[ui->active_tab]->draw(area);
+        topic->modules[topic->active_tab]->draw(area);
     }
 }
 
@@ -342,11 +420,11 @@ bool ui_template_btn(Rectangle bounds, const char *label, Color accent) {
     DrawRectangleRoundedLinesEx(bounds, 0.25f, 6, 1.0f,
                                 hovered ? accent : COL_GRID);
 
-    int tw = ui_measure_text(label, 13);
+    int tw = ui_measure_text(label, FONT_SIZE_TINY);
     ui_draw_text(label,
                  (int)(bounds.x + (bounds.width - tw) / 2),
-                 (int)(bounds.y + (bounds.height - 13) / 2),
-                 13, hovered ? accent : COL_TEXT_DIM);
+                 (int)(bounds.y + (bounds.height - FONT_SIZE_TINY) / 2),
+                 FONT_SIZE_TINY, hovered ? accent : COL_TEXT_DIM);
     return clicked;
 }
 

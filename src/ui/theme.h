@@ -10,11 +10,13 @@
 
 // Font
 #define FONT_PATH "assets/fonts/JetBrainsMono-Regular.ttf"
+#define FONT_LOAD_SIZE 128
 #define FONT_SIZE_DEFAULT 18
-#define FONT_SIZE_SMALL   14
-#define FONT_SIZE_LARGE   24
+#define FONT_SIZE_SMALL   15
+#define FONT_SIZE_LARGE   26
 #define FONT_SIZE_TITLE   48
 #define FONT_SIZE_HERO    72
+#define FONT_SIZE_TINY    13
 
 // Tab bar
 #define TAB_HEIGHT 44

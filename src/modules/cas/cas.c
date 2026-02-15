@@ -319,7 +319,7 @@ static float draw_func_row_ex(int index, float x, float y, float w,
     if (del_hov)
         DrawRectangleRounded(del, 0.3f, 4,
                              (Color){COL_ERROR.r, COL_ERROR.g, COL_ERROR.b, 40});
-    ui_draw_text("x", (int)del.x + 4, (int)del.y + 1, 13,
+    ui_draw_text("x", (int)del.x + 4, (int)del.y + 1, FONT_SIZE_TINY,
                  del_hov ? COL_ERROR : COL_TEXT_DIM);
     if (del_hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         remove_fn(index);
@@ -385,7 +385,7 @@ static float draw_vec_row(int index, float x, float y, float w) {
     if (del_hov)
         DrawRectangleRounded(del, 0.3f, 4,
                              (Color){COL_ERROR.r, COL_ERROR.g, COL_ERROR.b, 40});
-    ui_draw_text("x", (int)del.x + 4, (int)del.y + 1, 13,
+    ui_draw_text("x", (int)del.x + 4, (int)del.y + 1, FONT_SIZE_TINY,
                  del_hov ? COL_ERROR : COL_TEXT_DIM);
     if (del_hov && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         remove_vector(index);
@@ -697,13 +697,13 @@ static void cas_draw(Rectangle area) {
     DrawLine((int)sx, (int)help_y, (int)(sx + sw), (int)help_y, COL_GRID);
     help_y += 6;
     if (cas_mode == MODE_3D) {
-        ui_draw_text("Drag=Orbit  Scroll=Zoom  Home=Reset", (int)sx, (int)help_y, 11, COL_TEXT_DIM);
-        ui_draw_text("Surface: z = f(x,y)  e.g. sin(x)*cos(y)", (int)sx, (int)(help_y + 14), 11, COL_TEXT_DIM);
-        ui_draw_text("Vector: x,y,z  Right-click=Color", (int)sx, (int)(help_y + 28), 11, COL_TEXT_DIM);
+        ui_draw_text("Drag=Orbit  Scroll=Zoom  Home=Reset", (int)sx, (int)help_y, FONT_SIZE_TINY, COL_TEXT_DIM);
+        ui_draw_text("Surface: z = f(x,y)  e.g. sin(x)*cos(y)", (int)sx, (int)(help_y + 16), FONT_SIZE_TINY, COL_TEXT_DIM);
+        ui_draw_text("Vector: x,y,z  Right-click=Color", (int)sx, (int)(help_y + 32), FONT_SIZE_TINY, COL_TEXT_DIM);
     } else {
-        ui_draw_text("Scroll=Zoom  Drag=Pan  Home=Reset", (int)sx, (int)help_y, 11, COL_TEXT_DIM);
-        ui_draw_text("Click row to edit  Right-click=Color", (int)sx, (int)(help_y + 14), 11, COL_TEXT_DIM);
-        ui_draw_text("Implicit mul: 2x 3sin(x)  Abs: |x|", (int)sx, (int)(help_y + 28), 11, COL_TEXT_DIM);
+        ui_draw_text("Scroll=Zoom  Drag=Pan  Home=Reset", (int)sx, (int)help_y, FONT_SIZE_TINY, COL_TEXT_DIM);
+        ui_draw_text("Click row to edit  Right-click=Color", (int)sx, (int)(help_y + 16), FONT_SIZE_TINY, COL_TEXT_DIM);
+        ui_draw_text("Implicit mul: 2x 3sin(x)  Abs: |x|", (int)sx, (int)(help_y + 32), FONT_SIZE_TINY, COL_TEXT_DIM);
     }
 
     // Plot area
