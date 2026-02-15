@@ -20,13 +20,15 @@ BIN = openscisim
 # WASM / Emscripten settings
 RAYLIB_PATH ?= $(HOME)/raylib
 WEB_DIR = build/web
+SHELL_FILE = web/shell.html
 EMCC = emcc
 EMCFLAGS = -Wall -Wextra -std=c11 -I src -I $(RAYLIB_PATH)/src \
            -Os -DPLATFORM_WEB
 EMLDFLAGS = $(RAYLIB_PATH)/src/libraylib.a -lm \
             -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 \
             -s FORCE_FILESYSTEM=1 \
-            --preload-file assets
+            --preload-file assets \
+            --shell-file $(SHELL_FILE)
 
 .PHONY: all clean run web web-clean web-serve
 

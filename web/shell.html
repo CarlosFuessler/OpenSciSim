@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenSciSim</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0b0f14; color: #e8eaed; font-family: sans-serif; }
+      #loading { position: absolute; left: 16px; top: 16px; font-size: 14px; opacity: 0.7; }
+      canvas { width: 100%; height: 100%; display: block; background: #0b0f14; }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Loading...</div>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+    <script>
+      var Module = {
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+          function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+          }
+          window.addEventListener('resize', resize);
+          resize();
+          return canvas;
+        })(),
+        setStatus: function(text) {
+          var el = document.getElementById('loading');
+          if (!el) return;
+          if (!text) { el.style.display = 'none'; return; }
+          el.textContent = text;
+        }
+      };
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

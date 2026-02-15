@@ -99,6 +99,8 @@ This generates:
 - `build/web/index.js`
 - `build/web/index.wasm`
 
+Custom HTML shell (no Emscripten branding): `web/shell.html`
+
 ### 4. Serve & Open
 
 WASM files require HTTP (not `file://` URLs):
