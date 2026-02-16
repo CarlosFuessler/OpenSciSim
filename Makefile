@@ -22,12 +22,13 @@ BIN = openscisim
 
 # WASM / Emscripten settings
 RAYLIB_PATH ?= $(HOME)/raylib
+RAYLIB_WEB_LIB ?= $(firstword $(wildcard $(RAYLIB_PATH)/src/libraylib.web.a $(RAYLIB_PATH)/src/libraylib.a))
 WEB_DIR = build/web
 SHELL_FILE = web/shell.html
 EMCC = emcc
 EMCFLAGS = -Wall -Wextra -std=c11 -I src -I $(RAYLIB_PATH)/src \
            -Os -DPLATFORM_WEB
-EMLDFLAGS = $(RAYLIB_PATH)/src/libraylib.a -lm \
+EMLDFLAGS = $(RAYLIB_WEB_LIB) -lm \
             -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 \
             -s FORCE_FILESYSTEM=1 \
             --preload-file assets \
@@ -54,6 +55,11 @@ clean:
 web: $(WEB_DIR)/index.html
 
 $(WEB_DIR)/index.html: $(SRC)
+	@if [ -z "$(RAYLIB_WEB_LIB)" ]; then \
+		echo "Error: raylib web library not found in $(RAYLIB_PATH)/src."; \
+		echo "Build raylib with 'make PLATFORM=PLATFORM_WEB' (creates libraylib.web.a) and retry."; \
+		exit 1; \
+	fi
 	@mkdir -p $(WEB_DIR)
 	$(EMCC) $(EMCFLAGS) $(SRC) -o $(WEB_DIR)/index.html $(EMLDFLAGS)
 	@echo "✓ WASM build complete → $(WEB_DIR)/index.html"

@@ -1,40 +1,29 @@
 # OpenSciSim
 
-Interactive science simulator built with [Raylib](https://www.raylib.com/) in C.
-Explore mathematics, physics and chemistry through hands-on visualizations.
+Interactive science simulator in C using [Raylib](https://www.raylib.com/).
+Explore math, physics, and chemistry with visual demos.
 
 ![C](https://img.shields.io/badge/C11-00599C?style=flat&logo=c&logoColor=white)
 ![Raylib](https://img.shields.io/badge/Raylib-black?style=flat&logo=raylib&logoColor=white)
 
 ## Features
 
-### Mathematics
-- **CAS Plotter** — GeoGebra-style algebra view with 2D/3D function plotting, template buttons, implicit multiplication, graph coloring
-- **Calculator** — Casio-style scientific calculator with expression history
-- **Math Sims** — Parametric curves and polar graphs with presets
-
-### Physics
-- **Atom Models** — Interactive 3D visualization of 5 atomic models (Dalton → Quantum Mechanical) for 10 elements with detailed explanations
-- **Mechanics Lab** — Pendulum and projectile motion simulations with adjustable parameters
-
-### Chemistry
-- **Periodic Table** — Color-coded table (118 elements) with element details
-- **Molecule Viewer** — 3D ball-and-stick models of common molecules (H₂O, CO₂, CH₄, NH₃, NaCl, Ethanol)
-- **Chemistry Lab** — Reaction visualizer and pH (acid/base) simulator
+- **Math:** CAS plotter (2D/3D), calculator, parametric/polar sims
+- **Physics:** atomic models, pendulum + projectile mechanics
+- **Chemistry:** periodic table, molecule viewer, reaction and pH lab
 
 ## Prerequisites
 
 ### Using Nix (recommended)
 
 ```bash
-# Everything is handled by the flake — just enter the dev shell
 nix develop
 ```
 
 ### Manual
 
-- A C11 compiler (gcc, clang)
-- [Raylib](https://www.raylib.com/) (≥ 5.0) installed and available via `pkg-config`
+- A C11 compiler (gcc/clang)
+- [Raylib](https://www.raylib.com/) (≥ 5.0) via `pkg-config`
 - GNU Make
 
 ## Build & Run
@@ -64,9 +53,9 @@ make clean
 | 3D Zoom | Scroll wheel |
 | 3D Reset view | `Home` key |
 
-## Build for Web (WASM)
+## Web (WASM)
 
-OpenSciSim can be compiled to WebAssembly using [Emscripten](https://emscripten.org/) and run in any modern browser.
+Build with [Emscripten](https://emscripten.org/) and run in any modern browser.
 
 ### 1. Install Emscripten
 
@@ -78,9 +67,7 @@ cd emsdk
 source ./emsdk_env.sh
 ```
 
-### 2. Build Raylib for WASM
-
-Clone raylib (if you haven't already) and build it for WASM:
+### 2. Build Raylib for Web
 
 ```bash
 git clone https://github.com/raysan5/raylib.git
@@ -88,88 +75,44 @@ cd raylib/src
 make PLATFORM=PLATFORM_WEB
 ```
 
-This creates `libraylib.a` in the same directory.
+This creates `libraylib.web.a` (or `libraylib.a` on older raylib versions) in the same directory.
 
 ### 3. Build OpenSciSim for Web
 
 ```bash
-# Point to your raylib directory
 make web RAYLIB_PATH=~/path/to/raylib
 ```
 
-This generates:
-- `build/web/index.html`
-- `build/web/index.js`
-- `build/web/index.wasm`
-
-Custom HTML shell (no Emscripten branding): `web/shell.html`
-
 ### 4. Serve & Open
-
-WASM files require HTTP (not `file://` URLs):
 
 ```bash
 make web-serve
 # Then open http://localhost:8080
 ```
 
-Or manually:
-
-```bash
-cd build/web
-python3 -m http.server 8080
-```
+Or manually: `cd build/web && python3 -m http.server 8080`
 
 **Troubleshooting:**
-- If `libraylib.a` not found: confirm you ran `make PLATFORM=PLATFORM_WEB` in `raylib/src/`
-- If emcc not found: source `emsdk_env.sh` from your emsdk directory
-- Slow initial load: WASM bundles include all assets; first load ~20-50MB depending on browser cache
+- If the raylib library is missing, run `make PLATFORM=PLATFORM_WEB` in `raylib/src/`
+- If `emcc` is missing, source `emsdk_env.sh`
+- First load can be large because assets are bundled
 
 ## GitHub Pages (Automatic Deployment)
 
-This repo includes a GitHub Actions workflow that builds the WASM bundle and deploys it to **GitHub Pages** on every push to `main` or `master`.
-
-**Enable Pages once:**
-1. Go to **Settings → Pages**
-2. Set **Source** to **GitHub Actions**
-
-After that, every push will publish the site at:
-`https://<your-username>.github.io/<your-repo>/`
+This repo builds and deploys the WASM bundle to **GitHub Pages** on push to `main` or `master`.
+Enable once in **Settings → Pages** by setting **Source** to **GitHub Actions**.
+Then the site is published at `https://<your-username>.github.io/<your-repo>/`.
 
 ## Project Structure
 
 ```
 OpenSciSim/
-├── flake.nix                    # Nix flake (deps + dev shell)
-├── Makefile                     # Native + WASM build targets
+├── src/        # app + modules
 ├── assets/
-│   └── fonts/
-│       └── JetBrainsMono-Regular.ttf
-├── src/
-│   ├── main.c                   # Entry point, topic registration
-│   ├── ui/
-│   │   ├── theme.h              # Colors, sizes, constants
-│   │   ├── ui.h                 # AppUI, Topic, ScreenState
-│   │   └── ui.c                 # Start screen, tab bar, widgets
-│   ├── utils/
-│   │   ├── arena.h              # Arena allocator
-│   │   └── arena.c
-│   └── modules/
-│       ├── module.h             # Module interface
-│       ├── cas/                  # CAS plotter (2D + 3D)
-│       │   ├── cas.c / cas.h
-│       │   ├── parser.c / parser.h
-│       │   ├── eval.c / eval.h
-│       │   ├── plotter.c / plotter.h
-│       │   └── plotter3d.c / plotter3d.h
-│       ├── calc/                 # Scientific calculator
-│       │   └── calc.c / calc.h
-│       ├── physics/              # Atom model simulator
-│       │   └── physics.c / physics.h
-│       └── chemistry/            # Periodic table + molecules
-│           └── chemistry.c / chemistry.h
-└── build/
-    └── web/                     # WASM output (generated)
+├── web/        # HTML shell
+├── build/web/  # WASM output (generated)
+├── Makefile
+└── flake.nix
 ```
 
 ## License
