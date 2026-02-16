@@ -28,6 +28,7 @@ typedef struct AppUI {
     int         active_topic;
     ScreenState screen;
     float       start_time; // for animations
+    bool        show_help;  // help overlay toggle
 } AppUI;
 
 void ui_init(AppUI *ui);

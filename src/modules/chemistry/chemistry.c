@@ -843,6 +843,10 @@ static void chemistry_cleanup(void) {
 
 static Module chemistry_mod = {
     .name    = "Chemistry",
+    .help_text = "Periodic Table: Click any element for details.\n"
+                 "Molecule View: Drag to orbit, scroll to zoom, Home to reset.\n"
+                 "Select molecules from the sidebar list.\n"
+                 "Press [H] to toggle this help.",
     .init    = chemistry_init,
     .update  = chemistry_update,
     .draw    = chemistry_draw,

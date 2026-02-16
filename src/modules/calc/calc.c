@@ -323,6 +323,9 @@ static void calc_cleanup(void) {
 
 static Module calc_mod = {
     .name    = "Calculator",
+    .help_text = "Type expressions and press Enter to evaluate.\n"
+                 "Supports +, -, *, /, ^, sqrt, sin, cos, tan, log, pi, e.\n"
+                 "Press [H] to toggle this help.",
     .init    = calc_init,
     .update  = calc_update,
     .draw    = calc_draw,

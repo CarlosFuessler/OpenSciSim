@@ -15,6 +15,7 @@ SRC = src/main.c \
       src/modules/physics/physics.c \
       src/modules/physics/mechanics.c \
       src/modules/chemistry/chemistry.c \
+      src/modules/physics/optics.c \
       src/modules/chemistry/chemsim.c
 
 OBJ = $(SRC:.c=.o)

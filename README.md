@@ -9,7 +9,7 @@ Explore math, physics, and chemistry with visual demos.
 ## Features
 
 - **Math:** CAS plotter (2D/3D), calculator, parametric/polar sims
-- **Physics:** atomic models, pendulum + projectile mechanics
+- **Physics:** atomic models, pendulum + projectile mechanics, optics (photon + diffraction)
 - **Chemistry:** periodic table, molecule viewer, reaction and pH lab
 
 ## Prerequisites
@@ -47,6 +47,7 @@ make clean
 | Navigate topics | Click topic cards on start screen |
 | Switch tabs | Click tab bar within a topic |
 | Back to start | `ESC` or click `< Home` |
+| Help overlay | `H` or `?` |
 | 2D Plot zoom | Scroll wheel |
 | 2D Plot pan | Click & drag |
 | 3D Orbit | Click & drag |

@@ -646,6 +646,10 @@ static void physics_cleanup(void) {
 
 static Module physics_mod = {
     .name    = "Physics",
+    .help_text = "Select a model (Dalton, Thomson, Rutherford, Bohr, Quantum)\n"
+                 "and an element to visualize atomic structure.\n"
+                 "Drag to orbit 3D view, scroll to zoom, Home to reset.\n"
+                 "Press [H] to toggle this help.",
     .init    = physics_init,
     .update  = physics_update,
     .draw    = physics_draw,

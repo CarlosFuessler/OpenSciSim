@@ -161,15 +161,18 @@ static void update_reaction(Rectangle view) {
         if (p->pos.y > bottom) p->pos.y = bottom;
     }
 
-    // Simple A + B -> Product reaction
+    // Simple A + B -> Product reaction (skip reacted particles early)
     for (int i = 0; i < particle_count; i++) {
+        Particle *a = &particles[i];
+        if (a->type == 2) continue;
         for (int j = i + 1; j < particle_count; j++) {
-            Particle *a = &particles[i];
             Particle *b = &particles[j];
+            if (b->type == 2) continue;
             if (a->type == b->type) continue;
-            if ((a->type == 2) || (b->type == 2)) continue;
             float dx = a->pos.x - b->pos.x;
+            if (dx > 10.0f || dx < -10.0f) continue;
             float dy = a->pos.y - b->pos.y;
+            if (dy > 10.0f || dy < -10.0f) continue;
             float dist2 = dx * dx + dy * dy;
             if (dist2 < 100.0f) {
                 a->type = 2;
@@ -178,6 +181,7 @@ static void update_reaction(Rectangle view) {
                 a->vel.y *= 0.3f;
                 b->vel.x *= 0.3f;
                 b->vel.y *= 0.3f;
+                break;
             }
         }
     }
@@ -336,6 +340,11 @@ static void chemsim_cleanup(void) {
 
 static Module chemsim_mod = {
     .name    = "Chemistry Lab",
+    .help_text = "Reaction: Particles A + B collide to form Products.\n"
+                 "  Temperature controls particle speed.\n"
+                 "  Start/Pause toggles simulation, Reset respawns particles.\n"
+                 "Acid/Base: Adjust pH (0-14) to see [H+] concentration.\n"
+                 "Press [H] to toggle this help.",
     .init    = chemsim_init,
     .update  = chemsim_update,
     .draw    = chemsim_draw,

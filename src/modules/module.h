@@ -5,6 +5,7 @@
 
 typedef struct Module {
     const char *name;
+    const char *help_text;
     void (*init)(void);
     void (*update)(Rectangle area);
     void (*draw)(Rectangle area);

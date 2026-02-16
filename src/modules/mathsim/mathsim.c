@@ -325,6 +325,10 @@ static void mathsim_cleanup(void) {
 
 static Module mathsim_mod = {
     .name    = "Math Sims",
+    .help_text = "Parametric: Adjust a, b, n to explore parametric curves.\n"
+                 "Polar: Modify parameters for rose, spiral, lemniscate.\n"
+                 "Use +/- buttons to tweak values.\n"
+                 "Press [H] to toggle this help.",
     .init    = mathsim_init,
     .update  = mathsim_update,
     .draw    = mathsim_draw,

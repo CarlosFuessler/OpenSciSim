@@ -274,6 +274,10 @@ static void mechanics_cleanup(void) {
 
 static Module mechanics_mod = {
     .name    = "Mechanics",
+    .help_text = "Pendulum: Adjust length, amplitude, and gravity.\n"
+                 "Projectile: Set speed, angle, and gravity, then Launch.\n"
+                 "Use +/- buttons to change parameters.\n"
+                 "Press [H] to toggle this help.",
     .init    = mechanics_init,
     .update  = mechanics_update,
     .draw    = mechanics_draw,

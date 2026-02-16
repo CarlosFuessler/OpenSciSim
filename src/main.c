@@ -7,6 +7,7 @@
 #include "modules/physics/physics.h"
 #include "modules/physics/mechanics.h"
 #include "modules/chemistry/chemistry.h"
+#include "modules/physics/optics.h"
 #include "modules/chemistry/chemsim.h"
 #include <stddef.h>
 
@@ -46,6 +47,7 @@ int main(void) {
     ui_register_module(&ui, math, mathsim_module());
     ui_register_module(&ui, phys, physics_module());
     ui_register_module(&ui, phys, mechanics_module());
+    ui_register_module(&ui, phys, optics_module());
     ui_register_module(&ui, chem, chemistry_module());
     ui_register_module(&ui, chem, chemsim_module());
 

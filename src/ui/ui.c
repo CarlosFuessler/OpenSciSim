@@ -111,6 +111,7 @@ void ui_init(AppUI *ui) {
     ui->active_topic = 0;
     ui->screen       = SCREEN_START;
     ui->start_time   = 0.0f;
+    ui->show_help    = false;
 }
 
 int ui_add_topic(AppUI *ui, const char *name, const char *subtitle, Color color) {
@@ -208,9 +209,14 @@ static void draw_start_screen(AppUI *ui) {
 
         float grid_w = cols * card_w + (cols - 1) * gap;
         float grid_h = rows * card_h + (rows - 1) * gap;
+        float grid_top = h / 2.0f + 10;
+        float grid_bot_limit = h - 48;
+        if (grid_top + grid_h > grid_bot_limit) {
+            grid_top = grid_bot_limit - grid_h;
+        }
         Rectangle grid = {
             (w - grid_w) / 2.0f,
-            h * 0.55f - grid_h / 2.0f,
+            grid_top,
             grid_w, grid_h
         };
 
@@ -354,8 +360,17 @@ void ui_update(AppUI *ui) {
 
     // Escape goes back to start screen
     if (IsKeyPressed(KEY_ESCAPE)) {
-        ui->screen = SCREEN_START;
-        ui->start_time = (float)GetTime();
+        if (ui->show_help) {
+            ui->show_help = false;
+        } else {
+            ui->screen = SCREEN_START;
+            ui->start_time = (float)GetTime();
+        }
+    }
+
+    // Toggle help overlay with H or ? (Shift+/)
+    if (IsKeyPressed(KEY_H) || IsKeyPressed(KEY_SLASH)) {
+        ui->show_help = !ui->show_help;
     }
 
     // Update active module
@@ -446,6 +461,14 @@ void ui_draw(AppUI *ui) {
             ui->screen = SCREEN_START;
             ui->start_time = (float)GetTime();
         }
+
+        // "[H] Help" hint left of Home button
+        const char *help_hint = "[H] Help";
+        int hhw = ui_measure_text(help_hint, FONT_SIZE_TINY);
+        ui_draw_text(help_hint,
+                     (int)(home_btn.x - hhw - 12),
+                     (int)(home_btn.y + (home_btn.height - FONT_SIZE_TINY) / 2),
+                     FONT_SIZE_TINY, COL_TEXT_DIM);
     }
 
     // Draw active module
@@ -453,6 +476,71 @@ void ui_draw(AppUI *ui) {
         Rectangle area = { 0, (float)TAB_HEIGHT, (float)WINDOW_W, (float)WINDOW_H - TAB_HEIGHT };
         topic->modules[topic->active_tab]->draw(area);
     }
+
+    // Help overlay
+    if (ui->show_help && topic->module_count > 0) {
+        Module *mod = topic->modules[topic->active_tab];
+        const char *help = mod->help_text ? mod->help_text : "No help available for this module.";
+
+        DrawRectangle(0, 0, WINDOW_W, WINDOW_H, (Color){0, 0, 0, 160});
+
+        float pad = 32;
+        float box_w = 500;
+        float box_x = (WINDOW_W - box_w) / 2;
+        float box_y = WINDOW_H * 0.25f;
+
+        /* measure text height */
+        float line_h = FONT_SIZE_SMALL + 4;
+        int lines = 1;
+        for (const char *c = help; *c; c++) if (*c == '\n') lines++;
+        float text_h = lines * line_h;
+        float box_h = text_h + pad * 2 + 40;
+
+        DrawRectangleRounded(
+            (Rectangle){box_x, box_y, box_w, box_h},
+            0.04f, 8, COL_PANEL);
+        DrawRectangleRoundedLinesEx(
+            (Rectangle){box_x, box_y, box_w, box_h},
+            0.04f, 8, 2.0f, COL_ACCENT);
+
+        /* title */
+        char title[64];
+        snprintf(title, sizeof(title), "%s - Help", mod->name);
+        int tw = ui_measure_text(title, FONT_SIZE_DEFAULT);
+        ui_draw_text(title,
+                     (int)(box_x + (box_w - tw) / 2),
+                     (int)(box_y + 14),
+                     FONT_SIZE_DEFAULT, COL_ACCENT);
+
+        /* help text, line by line */
+        float ty = box_y + 44;
+        const char *line_start = help;
+        for (const char *c = help; ; c++) {
+            if (*c == '\n' || *c == '\0') {
+                char line_buf[256];
+                int len = (int)(c - line_start);
+                if (len >= (int)sizeof(line_buf)) len = (int)sizeof(line_buf) - 1;
+                memcpy(line_buf, line_start, len);
+                line_buf[len] = '\0';
+                ui_draw_text(line_buf,
+                             (int)(box_x + pad),
+                             (int)ty,
+                             FONT_SIZE_SMALL, COL_TEXT);
+                ty += line_h;
+                if (*c == '\0') break;
+                line_start = c + 1;
+            }
+        }
+
+        /* dismiss hint */
+        const char *dismiss = "Press H or ESC to close";
+        int dw = ui_measure_text(dismiss, FONT_SIZE_TINY);
+        ui_draw_text(dismiss,
+                     (int)(box_x + (box_w - dw) / 2),
+                     (int)(box_y + box_h - 22),
+                     FONT_SIZE_TINY, COL_TEXT_DIM);
+    }
+
     EndMode2D();
 }
 

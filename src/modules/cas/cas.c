@@ -747,6 +747,10 @@ static void cas_cleanup(void) {
 
 static Module cas_mod = {
     .name    = "CAS Calculator",
+    .help_text = "Enter expressions to plot (e.g. sin(x), x^2).\n"
+                 "2D: Scroll to zoom, drag to pan.\n"
+                 "3D: Drag to orbit, scroll to zoom, Home to reset.\n"
+                 "Press [H] to toggle this help.",
     .init    = cas_init,
     .update  = cas_update,
     .draw    = cas_draw,
