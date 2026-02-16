@@ -1,7 +1,12 @@
+#define _USE_MATH_DEFINES
 #include "optics.h"
 #include "../../ui/ui.h"
 #include "../../ui/theme.h"
 #include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <stdio.h>
 
 /* ── modes ── */
